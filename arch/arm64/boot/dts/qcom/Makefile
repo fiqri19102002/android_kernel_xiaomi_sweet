@@ -1,4 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0
+ifeq ($(CONFIG_MACH_XIAOMI),y)
+ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
+dtbo-$(CONFIG_MACH_XIAOMI_SWEET) += sweet-sdmmagpie-overlay.dtbo
+sweet-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
+endif
+else
 ifeq ($(TARGET_BOARD_TYPE),auto)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SM8150) += \
@@ -606,6 +612,7 @@ $(obj)/%.dtbo:$(src)/../../../../arm64/boot/dts/qcom/%.dts FORCE
 dtbs: $(addprefix $(obj)/,$(dtb-y)) $(addprefix $(obj)/,$(dtbo-y))
 else
 dtbs: $(addprefix $(obj)/../,$(dtb-y))
+endif
 endif
 endif
 clean-files	:= *.dtb *.dtbo
