@@ -316,6 +316,8 @@ enum dsi_cmd_set_type {
 #endif
 	DSI_CMD_SET_DISP_HBM_ON,
 	DSI_CMD_SET_DISP_HBM_OFF,
+	DSI_CMD_SET_DOZE_HBM,
+	DSI_CMD_SET_DOZE_LBM,
 	DSI_CMD_SET_MAX
 };
 
