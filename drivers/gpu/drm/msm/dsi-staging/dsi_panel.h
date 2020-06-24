@@ -229,6 +229,7 @@ struct dsi_panel {
 	enum dsi_panel_physical_type panel_type;
 
 	int hbm_mode;
+	bool resend_ea_hbm;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
