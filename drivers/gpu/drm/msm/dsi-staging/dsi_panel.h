@@ -229,6 +229,7 @@ struct dsi_panel {
 	enum dsi_panel_physical_type panel_type;
 
 	int hbm_mode;
+	bool resend_ea_hbm;
 
 	bool doze_enabled;
 	enum dsi_doze_mode_type doze_mode;
