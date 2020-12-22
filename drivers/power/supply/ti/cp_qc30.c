@@ -273,7 +273,7 @@ static bool qc3_disable_cp_by_jeita_status(void)
 	}
 
 	batt_temp = val.intval;
-	pr_err("batt_temp: %d\n", batt_temp);
+	pr_debug("batt_temp: %d\n", batt_temp);
 
 	if (bq_input_suspend) {
 		return true;
@@ -652,15 +652,15 @@ static int cp_reset_vbus_volt(void)
 	union power_supply_propval val = {0,};
 	if (pm_state.usb_type == POWER_SUPPLY_TYPE_USB_HVDCP_3P5) {
 		cp_update_fc_status();
-		pr_err("vbat=%d,vbus=%d\n", pm_state.bq2597x.vbat_volt, pm_state.bq2597x.vbus_volt);
+		pr_debug("vbat=%d,vbus=%d\n", pm_state.bq2597x.vbat_volt, pm_state.bq2597x.vbus_volt);
 		while (pm_state.bq2597x.vbus_volt > 6550) {
 			cp_tune_vbus_volt(VOLT_DOWN);
 			cp_update_fc_status();
 			qc3p5_reset_vbus_retry++;
 			usleep_range(10000, 10010);
-			pr_err("qc3p5_reset_vbus_retry=%d,vbus=%d\n", qc3p5_reset_vbus_retry, pm_state.bq2597x.vbus_volt);
+			pr_debug("qc3p5_reset_vbus_retry=%d,vbus=%d\n", qc3p5_reset_vbus_retry, pm_state.bq2597x.vbus_volt);
 			if (qc3p5_reset_vbus_retry > 300) {
-				pr_err("Failed to reset qc3.5 adapter volt to 6.55v or less\n");
+				pr_debug("Failed to reset qc3.5 adapter volt to 6.55v or less\n");
 				break;
 			}
 		}
@@ -1087,10 +1087,10 @@ void cp_statemachine(unsigned int port)
 			tune_vbus_retry = cp_get_qc_pulse_cnt();
 			tune_vbus_retry++;
 			cp_tune_vbus_volt(VOLT_UP);
-			pr_info("vvbus:%d, retry_times:%d, tuning...\n",
+			pr_debug("vvbus:%d, retry_times:%d, tuning...\n",
 					pm_state.bq2597x.vbus_volt, tune_vbus_retry);
 		} else {
-			pr_err("vvbus:%d, tuned above expected voltage, retry_times:%d\n",
+			pr_debug("vvbus:%d, tuned above expected voltage, retry_times:%d\n",
 					pm_state.bq2597x.vbus_volt, tune_vbus_retry);
 			cp_move_state(CP_STATE_FLASH2_ENTRY_3);
 			break;
@@ -1106,7 +1106,7 @@ void cp_statemachine(unsigned int port)
 				&& tune_vbus_retry > MAX_PLUSE_COUNT_ALLOWED)
 				|| (pm_state.usb_type == POWER_SUPPLY_TYPE_USB_HVDCP_3P5
 				&& tune_vbus_retry > MAX_HVDCP3P5_PLUSE_COUNT_ALLOWED)) {
-			pr_err("Failed to tune adapter volt into valid range, charge with switching charger\n");
+			pr_debug("Failed to tune adapter volt into valid range, charge with switching charger\n");
 			pm_state.sw_fc2_init_fail = true;
 			cp_move_state(CP_STATE_SW_ENTRY);
 		}
@@ -1114,15 +1114,15 @@ void cp_statemachine(unsigned int port)
 
 	case CP_STATE_FLASH2_ENTRY_3:
 		if (pm_state.bq2597x.bus_error_status == VBUS_ERROR_HIGH) {
-			pr_err("vvbus=%d, too high to open cp switcher, decrease it.\n",
+			pr_debug("vvbus=%d, too high to open cp switcher, decrease it.\n",
 					pm_state.bq2597x.vbus_volt);
 			cp_tune_vbus_volt(VOLT_DOWN);
 		} else if (pm_state.bq2597x.bus_error_status == VBUS_ERROR_LOW) {
-			pr_err("vvbus=%d, too low to open cp switcher, increase it.\n",
+			pr_debug("vvbus=%d, too low to open cp switcher, increase it.\n",
 					pm_state.bq2597x.vbus_volt);
 			cp_tune_vbus_volt(VOLT_UP);
 		} else {
-			pr_err("vbat volt is ok, enable flash charging\n");
+			pr_debug("vbat volt is ok, enable flash charging\n");
 			if (!pm_state.bq2597x.charge_enabled) {
 				cp_enable_fc(true);
 				cp_check_fc_enabled();
@@ -1155,16 +1155,16 @@ void cp_statemachine(unsigned int port)
 	case CP_STATE_FLASH2_TUNE:
 		ret = cp_flash2_charge(port);
 		if (ret == -ADC_ERR) {
-			pr_err("Move to stop charging:%d\n", ret);
+			pr_debug("Move to stop charging:%d\n", ret);
 			cp_move_state(CP_STATE_STOP_CHARGE);
 			break;
 		} else if (ret == -CP_ENABLE_FAIL || ret == TAPER_DONE) {
-			pr_err("Move to switch charging:%d\n", ret);
+			pr_debug("Move to switch charging:%d\n", ret);
 			cp_move_state(CP_STATE_SW_ENTRY);
 			break;
 		} else if (ret == CP_ENABLE_FAIL) {
 			tune_vbus_count = 0;
-			pr_err("Move to switch charging, will try to recover to flash charging:%d\n",
+			pr_debug("Move to switch charging, will try to recover to flash charging:%d\n",
 					ret);
 			recovery = true;
 			cp_move_state(CP_STATE_SW_ENTRY);
@@ -1178,7 +1178,7 @@ void cp_statemachine(unsigned int port)
 		break;
 
 	case CP_STATE_STOP_CHARGE:
-		pr_err("Stop charging\n");
+		pr_debug("Stop charging\n");
 		if (pm_state.bq2597x.charge_enabled) {
 			cp_enable_fc(false);
 			cp_check_fc_enabled();
@@ -1190,7 +1190,7 @@ void cp_statemachine(unsigned int port)
 		break;
 
 	default:
-		pr_err("No state defined! Move to stop charging\n");
+		pr_debug("No state defined! Move to stop charging\n");
 		cp_move_state(CP_STATE_STOP_CHARGE);
 		break;
 	}
@@ -1266,7 +1266,7 @@ static int cp_qc30_register_notifier(struct cp_qc30_data *chip)
 	chip->nb.notifier_call = cp_qc30_notifier_call;
 	rc = power_supply_reg_notifier(&chip->nb);
 	if (rc < 0) {
-		pr_err("Couldn't register psy notifier rc = %d\n", rc);
+		pr_debug("Couldn't register psy notifier rc = %d\n", rc);
 		return rc;
 	}
 
@@ -1279,42 +1279,42 @@ static int cp_qc30_parse_dt(struct cp_qc30_data *chip)
 	int rc = 0;
 
 	if (!node) {
-		pr_err("device tree node missing\n");
+		pr_debug("device tree node missing\n");
 		return -EINVAL;
 	}
 
 	rc = of_property_read_u32(node,
 			"mi,qc3-bat-volt-max", &chip->bat_volt_max);
 	if (rc < 0)
-		pr_err("qc3-bat-volt-max property missing, use default val\n");
+		pr_debug("qc3-bat-volt-max property missing, use default val\n");
 	else
 		sys_config.bat_volt_lp_lmt = chip->bat_volt_max;
 
 	rc = of_property_read_u32(node,
 			"mi,qc3-ffc-bat-volt-max", &chip->ffc_bat_volt_max);
 	if (rc < 0)
-		pr_err("qc3-ffc-bat-volt-max property missing, use default\n");
+		pr_debug("qc3-ffc-bat-volt-max property missing, use default\n");
 	else
 		sys_config.ffc_bat_volt_lmt = chip->ffc_bat_volt_max;
 
 	rc = of_property_read_u32(node,
 			"mi,qc3-bat-curr-max", &chip->bat_curr_max);
 	if (rc < 0)
-		pr_err("qc3-bat-curr-max property missing, use default val\n");
+		pr_debug("qc3-bat-curr-max property missing, use default val\n");
 	else
 		sys_config.bat_curr_lp_lmt = chip->bat_curr_max;
 
 	rc = of_property_read_u32(node,
 			"mi,qc3-bus-volt-max", &chip->bus_volt_max);
 	if (rc < 0)
-		pr_err("qc3-bus-volt-max property missing, use default val\n");
+		pr_debug("qc3-bus-volt-max property missing, use default val\n");
 	else
 		sys_config.bus_volt_lp_lmt = chip->bus_volt_max;
 
 	rc = of_property_read_u32(node,
 			"mi,qc3-bus-curr-max", &chip->bus_curr_max);
 	if (rc < 0)
-		pr_err("qc3-bus-curr-max property missing, use default val\n");
+		pr_debug("qc3-bus-curr-max property missing, use default val\n");
 	else
 		sys_config.bus_curr_lp_lmt = chip->bus_curr_max;
 
@@ -1344,7 +1344,7 @@ static int cp_qc30_probe(struct platform_device *pdev)
 	chip->dev = dev;
 	ret = cp_qc30_parse_dt(chip);
 	if (ret < 0) {
-		pr_err("Couldn't parse device tree rc=%d\n", ret);
+		pr_debug("Couldn't parse device tree rc=%d\n", ret);
 		return ret;
 	}
 
