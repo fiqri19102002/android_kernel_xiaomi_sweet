@@ -553,8 +553,8 @@ void ion_device_add_heap(struct ion_device *idev, struct ion_heap *heap)
 	struct ion_heap_data *hdata = &idev->heap_data[idev->heap_count];
 
 	if (heap->flags & ION_HEAP_FLAG_DEFER_FREE) {
-		heap->wq = alloc_workqueue("%s", WQ_UNBOUND,
-					   WQ_UNBOUND_MAX_ACTIVE, heap->name);
+		heap->wq = alloc_workqueue("%s", WQ_UNBOUND | WQ_MEM_RECLAIM |
+					   WQ_CPU_INTENSIVE, 0, heap->name);
 		BUG_ON(!heap->wq);
 	}
 
