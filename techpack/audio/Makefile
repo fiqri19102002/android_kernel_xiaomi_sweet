@@ -82,8 +82,5 @@ endif
 
 obj-y += soc/
 obj-y += dsp/
-ifeq ($(CONFIG_US_PROXIMITY), y)
-obj-y += dsp/mius
-endif
 obj-y += ipc/
 obj-y += asoc/
