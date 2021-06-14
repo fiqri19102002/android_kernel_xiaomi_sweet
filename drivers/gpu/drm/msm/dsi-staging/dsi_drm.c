@@ -55,8 +55,6 @@ struct dsi_bridge *gbridge;
 static struct delayed_work prim_panel_work;
 static atomic_t prim_panel_is_on;
 static struct wakeup_source prim_panel_wakelock;
-
-struct msm_drm_notifier g_notify_data;
 #endif
 
 static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
@@ -196,6 +194,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	struct drm_device *dev = bridge->dev;
 	int event = 0;
+	struct msm_drm_notifier notify_data;
 
 	if (dev->doze_state == MSM_DRM_BLANK_POWERDOWN) {
 		dev->doze_state = MSM_DRM_BLANK_UNBLANK;
@@ -203,7 +202,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	}
 
 	event = dev->doze_state;
-	g_notify_data.data = &event;
+	notify_data.data = &event;
 #endif
 
 	if (!bridge) {
@@ -234,7 +233,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 		return;
 	}
 
-	msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK, &g_notify_data);
+	msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK, &notify_data);
 #endif
 
 	if (c_bridge->dsi_mode.dsi_mode_flags &
@@ -263,7 +262,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	}
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &g_notify_data);
+	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &notify_data);
 #endif
 
 	SDE_ATRACE_END("dsi_display_enable");
@@ -407,6 +406,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	struct drm_device *dev = bridge->dev;
+	struct msm_drm_notifier notify_data;
 	int event = 0;
 
 	if (dev->doze_state == MSM_DRM_BLANK_UNBLANK) {
@@ -415,7 +415,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	}
 
 	event = dev->doze_state;
-	g_notify_data.data = &event;
+	notify_data.data = &event;
 #endif
 
 	if (!bridge) {
@@ -427,7 +427,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	SDE_ATRACE_BEGIN("dsi_display_disable");
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK, &g_notify_data);
+	msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK, &notify_data);
 #endif
 
 	rc = dsi_display_disable(c_bridge->display);
@@ -449,7 +449,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	SDE_ATRACE_END("dsi_bridge_post_disable");
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &g_notify_data);
+	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &notify_data);
 
 	if (c_bridge->display->is_prim_display)
 		atomic_set(&prim_panel_is_on, false);
