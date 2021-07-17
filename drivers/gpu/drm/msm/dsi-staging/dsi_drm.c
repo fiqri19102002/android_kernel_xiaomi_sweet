@@ -222,8 +222,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	}
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (c_bridge->display->is_prim_display &&
-		atomic_read(&c_bridge->display_active)) {
+	if (atomic_read(&c_bridge->display_active)) {
 		cancel_delayed_work_sync(&c_bridge->pd_work);
 		return;
 	}
@@ -268,8 +267,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 									rc);
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (c_bridge->display->is_prim_display)
-		atomic_set(&c_bridge->display_active, true);
+	atomic_set(&c_bridge->display_active, true);
 #endif
 }
 
@@ -403,8 +401,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &notify_data);
 
-	if (c_bridge->display->is_prim_display)
-		atomic_set(&c_bridge->display_active, false);
+	atomic_set(&c_bridge->display_active, false);
 #endif
 }
 
@@ -1169,13 +1166,11 @@ struct dsi_bridge *dsi_drm_bridge_init(struct dsi_display *display,
 	encoder->bridge->is_dsi_drm_bridge = true;
 	mutex_init(&encoder->bridge->lock);
 
-	if (display->is_prim_display) {
-		atomic_set(&resume_pending, 0);
-		wakeup_source_init(&prim_panel_wakelock, "prim_panel_wakelock");
-		atomic_set(&bridge->display_active, false);
-		init_waitqueue_head(&resume_wait_q);
-		INIT_DELAYED_WORK(&bridge->pd_work, dsi_bridge_post_disable_work);
-	}
+	atomic_set(&resume_pending, 0);
+	wakeup_source_init(&prim_panel_wakelock, "prim_panel_wakelock");
+	atomic_set(&bridge->display_active, false);
+	init_waitqueue_head(&resume_wait_q);
+	INIT_DELAYED_WORK(&bridge->pd_work, dsi_bridge_post_disable_work);
 #endif
 	return bridge;
 error_free_bridge:
