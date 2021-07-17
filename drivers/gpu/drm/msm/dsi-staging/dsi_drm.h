@@ -32,7 +32,8 @@ struct dsi_bridge {
 	struct dsi_display *display;
 	struct dsi_display_mode dsi_mode;
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct mutex lock;
+	struct delayed_work pd_work;
+	atomic_t display_active;
 #endif
 };
 
