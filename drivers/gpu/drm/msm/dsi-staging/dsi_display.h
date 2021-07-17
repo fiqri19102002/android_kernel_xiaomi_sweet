@@ -203,9 +203,6 @@ struct dsi_display {
 	struct drm_connector *ext_conn;
 
 	const char *name;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	bool is_prim_display;
-#endif
 	const char *display_type;
 	const char *dsi_type;
 	struct list_head list;
