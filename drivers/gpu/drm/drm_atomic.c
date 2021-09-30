@@ -2207,6 +2207,10 @@ static void complete_crtc_signaling(struct drm_device *dev,
 	kfree(fence_state);
 }
 
+#ifdef CONFIG_KPROFILES
+extern int kp_active_mode(void);
+#endif
+
 static int __drm_mode_atomic_ioctl(struct drm_device *dev, void *data,
 				   struct drm_file *file_priv)
 {
@@ -2251,11 +2255,30 @@ static int __drm_mode_atomic_ioctl(struct drm_device *dev, void *data,
 		return -EINVAL;
 
 	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)) {
+#ifdef CONFIG_KPROFILES
+		switch (kp_active_mode()) {
+		case 0:
+		case 2:
+			if (cpu_input_boost_within_input(3250))
+				cpu_input_boost_kick();
+
+			if (df_boost_within_input(3250))
+				devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
+			break;
+		case 3:
+			cpu_input_boost_kick_max(100);
+			devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 100);
+			break;
+		default:
+			break;
+		}
+#else
 		if (cpu_input_boost_within_input(3250))
 			cpu_input_boost_kick();
 
 		if (df_boost_within_input(3250))
 			devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
+#endif
 	}
 
 	drm_modeset_acquire_init(&ctx, 0);
