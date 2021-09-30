@@ -48,6 +48,10 @@ struct boost_drv {
 	unsigned long last_input_jiffies;
 };
 
+#ifdef CONFIG_KPROFILES
+extern int kp_active_mode(void);
+#endif
+
 static void input_unboost_worker(struct work_struct *work);
 static void max_unboost_worker(struct work_struct *work);
 
@@ -124,6 +128,11 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
+#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+#endif
+
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
 			      msecs_to_jiffies(input_boost_duration)))
@@ -145,6 +154,11 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
+
+#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+#endif
 
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
