@@ -123,6 +123,7 @@ enum print_reason {
 /* used for bq charge pump solution */
 #define MAIN_CHG_VOTER			"MAIN_CHG_VOTER"
 #define HVDCP3_START_ICL_VOTER	"HVDCP3_START_ICL_VOTER"
+#define BATT_LN8000_VOTER		"BATT_LN8000_VOTER"
 #endif
 #define DCIN_AICL_VOTER			"DCIN_AICL_VOTER"
 #define OVERHEAT_LIMIT_VOTER		"OVERHEAT_LIMIT_VOTER"
