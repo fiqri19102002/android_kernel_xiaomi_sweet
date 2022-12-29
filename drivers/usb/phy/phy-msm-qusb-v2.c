@@ -633,13 +633,13 @@ static int qusb_phy_init(struct usb_phy *phy)
 		if (!qphy->tune_val)
 			qusb_phy_get_tune1_param(qphy);
 
-		pr_info("%s(): Programming TUNE1 parameter as:%x\n", __func__,
+		pr_debug("%s(): Programming TUNE1 parameter as:%x\n", __func__,
 				qphy->tune_val);
 		writel_relaxed(qphy->tune_val,
 				qphy->base + qphy->phy_reg[PORT_TUNE1]);
-		pr_info("%s(): Override TUNE1 parameter as:%x\n", __func__,
+		pr_debug("%s(): Override TUNE1 parameter as:%x\n", __func__,
 				qphy->override_tune1_val);
-		pr_info("%s(): Programming pll_bias parameter as:%x\n", __func__,
+		pr_debug("%s(): Programming pll_bias parameter as:%x\n", __func__,
 				qphy->tune_pll_bias);
 		if (qphy->override_tune1_val)
 			writel_relaxed(qphy->override_tune1_val,
