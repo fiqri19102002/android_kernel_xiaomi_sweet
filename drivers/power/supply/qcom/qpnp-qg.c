@@ -2144,7 +2144,7 @@ static int qg_get_ffc_iterm_for_qg(struct qpnp_qg *chip)
 		else
 			ffc_full_current = chip->bp.ffc_current_cfg[HIGH_TEMP_FULL_CURRENT];
 
-		pr_info("use dts config, temp = %d, ffc_full_current = %d\n", tbat, ffc_full_current);
+		pr_debug("use dts config, temp = %d, ffc_full_current = %d\n", tbat, ffc_full_current);
 		return ffc_full_current;
 	}
 
@@ -2172,7 +2172,7 @@ static int qg_get_ffc_iterm_for_qg(struct qpnp_qg *chip)
 	} else {
 		ffc_full_current = FFC_BATT_FULL_CURRENT;
 	}
-	pr_info("ffc_full_current = %d\n", ffc_full_current);
+	pr_debug("ffc_full_current = %d\n", ffc_full_current);
 
 	return ffc_full_current;
 }
@@ -2191,7 +2191,7 @@ static int qg_get_ffc_iterm_for_chg(struct qpnp_qg *chip)
 		else
 			ffc_terminal_current = chip->bp.ffc_current_cfg[HIGH_TEMP_TERMINAL_CURRENT];
 
-		pr_info("use dts config, temp = %d, ffc_terminal_current = %d\n", tbat, ffc_terminal_current);
+		pr_debug("use dts config, temp = %d, ffc_terminal_current = %d\n", tbat, ffc_terminal_current);
 		return ffc_terminal_current;
 	}
 
@@ -2209,10 +2209,10 @@ static int qg_get_ffc_iterm_for_chg(struct qpnp_qg *chip)
 	} else {
 		if (is_batt_vendor_nvt) {
 			ffc_terminal_current = FFC_CHG_TERM_NVT_CURRENT;
-			pr_err("ffc_terminal_current nvt is 550\n", rc);
+			pr_debug("ffc_terminal_current nvt is 550\n", rc);
 		} else {
 			ffc_terminal_current = FFC_CHG_TERM_SWD_CURRENT;
-			pr_err("ffc_terminal_current swd is 600\n", rc);
+			pr_debug("ffc_terminal_current swd is 600\n", rc);
 		}
 	}
 	return ffc_terminal_current;
@@ -5269,7 +5269,7 @@ static void qg_battery_soc_smooth_tracking(struct qpnp_qg *chip)
 
 	soc_changed = min(1, delta_time);
 
-	pr_info("soc:%d, last_soc:%d, raw_soc:%d, soc_changed:%d, update_now:%d, charge_status:%d, batt_ma:%d\n",
+	pr_debug("soc:%d, last_soc:%d, raw_soc:%d, soc_changed:%d, update_now:%d, charge_status:%d, batt_ma:%d\n",
 			chip->param.batt_soc, last_batt_soc, chip->param.batt_raw_soc, soc_changed, chip->param.update_now,
 			chip->charge_status, chip->param.batt_ma);
 
@@ -5333,7 +5333,7 @@ static void soc_monitor_work(struct work_struct *work)
 	if (chip->soc_reporting_ready)
 		qg_battery_soc_smooth_tracking(chip);
 
-	pr_err("soc:%d, raw_soc:%d, c:%d, s:%d\n",
+	pr_debug("soc:%d, raw_soc:%d, c:%d, s:%d\n",
 			chip->param.batt_soc, chip->param.batt_raw_soc,
 			chip->param.batt_ma, chip->charge_status);
 

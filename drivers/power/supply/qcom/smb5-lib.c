@@ -759,7 +759,7 @@ int smblib_set_charge_param(struct smb_charger *chg,
 		power_supply_get_property(chg->cp_psy, POWER_SUPPLY_PROP_CP_VBAT_CALIBRATE, &val);
 		if (val.intval >= -20000 && val.intval <= 20000) {
 			val_u += val.intval;
-			pr_info("fv calibrate = %d, fv = %d\n", val.intval, val_u);
+			pr_debug("fv calibrate = %d, fv = %d\n", val.intval, val_u);
 		}
 	}
 
@@ -767,7 +767,7 @@ int smblib_set_charge_param(struct smb_charger *chg,
 		val_u += chg->fcc_calibrate;
 
 	if (*chg->mtbf_icl && param->reg == USBIN_CURRENT_LIMIT_CFG_REG && chg->real_charger_type != POWER_SUPPLY_TYPE_USB) {
-		pr_info("disable charge safety timeout and rise icl to %duA\n", *chg->mtbf_icl);
+		pr_debug("disable charge safety timeout and rise icl to %duA\n", *chg->mtbf_icl);
 		smblib_write(chg, 0x10A0, 0); /* disable charge safety timeout */
 		val_u = *chg->mtbf_icl; /* rise icl, because MTBF test consume high power */
 	}
@@ -1023,7 +1023,7 @@ set_term:
 	rc = vote(chg->fv_votable, PD_VERIFED_VOTER,
 			!enable, PD_UNVERIFED_VOLTAGE);
 
-	pr_info("fastcharge mode:%d termi:%d\n", enable, termi);
+	pr_debug("fastcharge mode:%d termi:%d\n", enable, termi);
 
 	return 0;
 }
@@ -1440,7 +1440,7 @@ static int smblib_notifier_call(struct notifier_block *nb,
 				pr_err("Couldn't get batt verify status rc=%d\n", rc);
 			}
 			chg->batt_verified = pval.intval;
-			pr_err("batt_verified =%d\n", chg->batt_verified);
+			pr_debug("batt_verified =%d\n", chg->batt_verified);
 			schedule_work(&chg->batt_verify_update_work);
 #endif
 			schedule_work(&chg->bms_update_work);
@@ -3562,7 +3562,7 @@ int smblib_dp_dm(struct smb_charger *chg, int val)
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	if (chg->use_bq_pump) {
-		pr_info("dp_dm is controled by our self\n");
+		pr_debug("dp_dm is controled by our self\n");
 		return rc;
 	}
 
@@ -8988,7 +8988,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 	if (rc < 0)
 		return;
 
-	pr_err("input_present: %d\n", input_present);
+	pr_debug("input_present: %d\n", input_present);
 	if (input_present == INPUT_NOT_PRESENT) {
 		if (is_client_vote_enabled(chg->fv_votable,
 						SIX_PIN_VFLOAT_VOTER))
@@ -9000,7 +9000,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 	}
 
 	if (chg->start_step_vbat >= VBAT_FOR_STEP_MIN_UV) {
-		pr_err("start step vbat is too high, no need do step charge\n");
+		pr_debug("start step vbat is too high, no need do step charge\n");
 		return;
 	}
 
@@ -9020,7 +9020,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 		return;
 	}
 	main_charge_type = pval.intval;
-	pr_err("main_charge_type: %d\n", main_charge_type);
+	pr_debug("main_charge_type: %d\n", main_charge_type);
 
 	if (main_charge_type == POWER_SUPPLY_CHARGE_TYPE_TAPER)
 		chg->trigger_taper_count++;

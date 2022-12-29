@@ -161,7 +161,7 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 	if (!rc)
 		bq_input_suspend = !!pval.intval;
 
-	pr_info("bq_input_suspend: %d\n", bq_input_suspend);
+	pr_debug("bq_input_suspend: %d\n", bq_input_suspend);
 
 	/* is input suspend is set true, do not allow bq quick charging */
 	if (bq_input_suspend)
@@ -178,7 +178,7 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 	}
 
 	batt_temp = pval.intval;
-	pr_info("batt_temp: %d\n", batt_temp);
+	pr_debug("batt_temp: %d\n", batt_temp);
 
 	if (pdpm->cp.sc8551_charge_mode == SC8551_CHARGE_MODE_DIV2
 			|| pdpm->cp.sc8551_charge_mode == SC8551_CHARGE_MODE_BYPASS) {
@@ -188,8 +188,8 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 		warm_thres = JEITA_WARM_THR;
 		cool_thres = JEITA_COOL_THR;
 	}
-	pr_info("warm_thres: %d\n", warm_thres);
-	pr_info("cool_thres: %d\n", cool_thres);
+	pr_debug("warm_thres: %d\n", warm_thres);
+	pr_debug("cool_thres: %d\n", cool_thres);
 
 	if (batt_temp >= warm_thres && !pdpm->jeita_triggered) {
 		pdpm->jeita_triggered = true;
@@ -393,7 +393,7 @@ static int usbpd_config_max_vbat(struct usbpd_pm *pdpm)
 	else
 		pm_config.bat_volt_lp_lmt = pdpm->bat_volt_max;
 
-	pr_info("config max_vbat, ffc_enable = %d, max_vbat = %d", ffc_enable, pm_config.bat_volt_lp_lmt);
+	pr_debug("config max_vbat, ffc_enable = %d, max_vbat = %d", ffc_enable, pm_config.bat_volt_lp_lmt);
 	return ret;
 }
 
@@ -596,7 +596,7 @@ static int usbpd_pm_check_cp_enabled(struct usbpd_pm *pdpm)
 	if (!ret)
 		pdpm->cp.charge_enabled = !!val.intval;
 
-	pr_info("pdpm->cp.charge_enabled:%d\n", pdpm->cp.charge_enabled);
+	pr_debug("pdpm->cp.charge_enabled:%d\n", pdpm->cp.charge_enabled);
 
 	return ret;
 }
@@ -953,7 +953,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 			ibus_limit = curr_ibus_limit - 100;
 			effective_fcc_taper = usbpd_get_effective_fcc_val(pdpm);
 			effective_fcc_taper -= BQ_TAPER_DECREASE_STEP_MA;
-			pr_err("bq set taper fcc to: %d mA\n", effective_fcc_taper);
+			pr_debug("bq set taper fcc to: %d mA\n", effective_fcc_taper);
 			if (pdpm->fcc_votable)
 				vote(pdpm->fcc_votable, BQ_TAPER_FCC_VOTER,
 					true, effective_fcc_taper * 1000);
@@ -967,7 +967,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 
 	ibus_limit = min(ibus_limit, pdpm->apdo_max_curr);
 
-	pr_info("chg_mode:%d, curr_ibus_limit:%d, ibus_limit:%d, bat_curr_lp_lmt:%d, effective_fcc_val:%d, apdo_max_curr:%d\n",
+	pr_debug("chg_mode:%d, curr_ibus_limit:%d, ibus_limit:%d, bat_curr_lp_lmt:%d, effective_fcc_val:%d, apdo_max_curr:%d\n",
 			pdpm->cp.sc8551_charge_mode, curr_ibus_limit, ibus_limit,
 			pm_config.bat_curr_lp_lmt, effective_fcc_val, pdpm->apdo_max_curr);
 
@@ -1002,10 +1002,10 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 	sw_ctrl_steps = min(min(step_vbat, step_ibus), step_ibat);
 	sw_ctrl_steps = min(sw_ctrl_steps, step_bat_reg);
 
-	pr_info("vbus:%d, ibus:%d(m:%d,s:%d), vbat:%d(reg:%d), ibat:%d\n",
+	pr_debug("vbus:%d, ibus:%d(m:%d,s:%d), vbat:%d(reg:%d), ibat:%d\n",
 			pdpm->cp.vbus_volt, ibus_total, pdpm->cp.ibus_curr, pdpm->cp_sec.ibus_curr,
 			pdpm->cp.vbat_volt, pdpm->cp.vbat_reg, pdpm->cp.ibat_curr);
-	pr_info("sw_ctrl_steps:%d, step_vbat:%d, step_ibus:%d, step_ibat:%d, step_bat_reg:%d\n",
+	pr_debug("sw_ctrl_steps:%d, step_vbat:%d, step_ibus:%d, step_ibat:%d, step_bat_reg:%d\n",
 			sw_ctrl_steps, step_vbat, step_ibus, step_ibat, step_bat_reg);
 
 	/* hardware alarm loop */
@@ -1013,7 +1013,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 		hw_ctrl_steps = -pm_config.fc2_steps;
 	else
 		hw_ctrl_steps = pm_config.fc2_steps;
-	pr_info("hw_ctrl_steps:%d\n", hw_ctrl_steps);
+	pr_debug("hw_ctrl_steps:%d\n", hw_ctrl_steps);
 
 	/* check if cp disabled due to other reason*/
 	usbpd_pm_check_cp_enabled(pdpm);
@@ -1023,7 +1023,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 
 	pd_get_batt_current_thermal_level(pdpm, &thermal_level);
 	pdpm->is_temp_out_fc2_range = pd_disable_cp_by_jeita_status(pdpm);
-	pr_info("is_temp_out_fc2_range = %d, thermal_level = %d\n",
+	pr_debug("is_temp_out_fc2_range = %d, thermal_level = %d\n",
 			pdpm->is_temp_out_fc2_range, thermal_level);
 
 	/*check if slowly charging feature is enabled*/
@@ -1080,7 +1080,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 	/* sc8551 mode switch*/
 	ret = usbpd_pm_switch_cp_charge_mode(pdpm);
 	if (ret > 0) {
-		pr_info("charge mode changed, re-run statemachine\n");
+		pr_debug("charge mode changed, re-run statemachine\n");
 		return PM_ALGO_RET_CHG_DISABLED;
 	}
 
@@ -1088,7 +1088,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 	 * thermal mitigation*/
 
 	steps = min(sw_ctrl_steps, hw_ctrl_steps);
-	pr_info("steps: %d, sw_ctrl_steps:%d, hw_ctrl_steps:%d\n", steps, sw_ctrl_steps, hw_ctrl_steps);
+	pr_debug("steps: %d, sw_ctrl_steps:%d, hw_ctrl_steps:%d\n", steps, sw_ctrl_steps, hw_ctrl_steps);
 	pdpm->request_voltage += steps * STEP_MV;
 
 	if (pdpm->apdo_max_volt == PPS_VOL_MAX)
@@ -1103,7 +1103,7 @@ static int usbpd_pm_fc2_charge_algo(struct usbpd_pm *pdpm)
 
 	pdpm->request_current = min(pdpm->apdo_max_curr, curr_ibus_limit);
 
-	pr_info("steps:%d, pdpm->request_voltage:%d, pdpm->request_current:%d\n",
+	pr_debug("steps:%d, pdpm->request_voltage:%d, pdpm->request_current:%d\n",
 			steps, pdpm->request_voltage, pdpm->request_current);
 
 	return PM_ALGO_RET_OK;
@@ -1318,7 +1318,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 			break;
 		} else if (ret == PM_ALGO_RET_SLOWLY_CHARGING) {
 			recover = true;
-			pr_info("Slow Charging Feature is running %d\n", ret);
+			pr_debug("Slow Charging Feature is running %d\n", ret);
 			usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_EXIT);
 		} else {
 			ret = usbpd_select_pdo(pdpm->pd, pdpm->apdo_selected_pdo, pdpm->request_voltage * 1000, pdpm->request_current * 1000);
@@ -1333,7 +1333,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 				}
 			} else {
 				request_fail_count = 0;
-				pr_info("sucess request_voltage:%d, request_current:%d\n", pdpm->request_voltage, pdpm->request_current);
+				pr_debug("sucess request_voltage:%d, request_current:%d\n", pdpm->request_voltage, pdpm->request_current);
 			}
 		}
 
@@ -1396,7 +1396,7 @@ static void usbpd_pm_workfunc(struct work_struct *work)
 	usbpd_pm_update_cp_sec_status(pdpm);
 
 
-	pr_info("%s:pd_bat_volt_lp_lmt=%d, vbatt_now=%d\n",
+	pr_debug("%s:pd_bat_volt_lp_lmt=%d, vbatt_now=%d\n",
 			__func__, pm_config.bat_volt_lp_lmt, pdpm->cp.vbat_volt);
 
 	if (!usbpd_pm_sm(pdpm) && pdpm->pd_active)
