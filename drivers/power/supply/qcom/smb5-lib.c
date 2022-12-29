@@ -744,7 +744,7 @@ int smblib_set_charge_param(struct smb_charger *chg,
 		power_supply_get_property(chg->cp_psy, POWER_SUPPLY_PROP_CP_VBAT_CALIBRATE, &val);
 		if (val.intval >= -20000 && val.intval <= 20000) {
 			val_u += val.intval;
-			pr_info("fv calibrate = %d, fv = %d\n", val.intval, val_u);
+			pr_debug("fv calibrate = %d, fv = %d\n", val.intval, val_u);
 		}
 	}
 
@@ -752,7 +752,7 @@ int smblib_set_charge_param(struct smb_charger *chg,
 		val_u += chg->fcc_calibrate;
 
 	if (*chg->mtbf_icl && param->reg == USBIN_CURRENT_LIMIT_CFG_REG && chg->real_charger_type != POWER_SUPPLY_TYPE_USB) {
-		pr_info("disable charge safety timeout and rise icl to %duA\n", *chg->mtbf_icl);
+		pr_debug("disable charge safety timeout and rise icl to %duA\n", *chg->mtbf_icl);
 		smblib_write(chg, 0x10A0, 0); /* disable charge safety timeout */
 		val_u = *chg->mtbf_icl; /* rise icl, because MTBF test consume high power */
 	}
@@ -938,7 +938,7 @@ int smblib_set_fastcharge_mode(struct smb_charger *chg, bool enable)
 	}
 
 	if (enable && (pval.intval >= chg->ffc_high_tbat || pval.intval <= chg->ffc_low_tbat)) {
-		pr_info("tbat out of range, don't enable ffc\n");
+		pr_debug("tbat out of range, don't enable ffc\n");
 		enable = false;
 	}
 
@@ -977,7 +977,7 @@ set_term:
 	rc = vote(chg->fv_votable, PD_VERIFED_VOTER,
 			!enable, PD_UNVERIFED_VOLTAGE);
 
-	pr_info("fastcharge mode:%d termi:%d\n", enable, termi);
+	pr_debug("fastcharge mode:%d termi:%d\n", enable, termi);
 
 	return 0;
 }
@@ -1379,7 +1379,7 @@ static int smblib_notifier_call(struct notifier_block *nb,
 				pr_err("Couldn't get batt verify status rc=%d\n", rc);
 			}
 			chg->batt_verified = pval.intval;
-			pr_err("batt_verified =%d\n", chg->batt_verified);
+			pr_debug("batt_verified =%d\n", chg->batt_verified);
 			schedule_work(&chg->batt_verify_update_work);
 #endif
 			schedule_work(&chg->bms_update_work);
@@ -3406,7 +3406,7 @@ int smblib_dp_dm(struct smb_charger *chg, int val)
 	u8 stat;
 
 	if (chg->use_bq_pump) {
-		pr_info("dp_dm is controled by our self\n");
+		pr_debug("dp_dm is controled by our self\n");
 		return rc;
 	}
 
@@ -6376,7 +6376,7 @@ unsuspend_input:
 
 		smblib_rerun_apsd(chg);
 
-		pr_info("qc2_unsupported charger detected\n");
+		pr_debug("qc2_unsupported charger detected\n");
 		rc = smblib_force_vbus_voltage(chg, FORCE_5V_BIT);
 		if (rc < 0)
 			pr_err("Failed to force 5V\n");
@@ -6533,7 +6533,7 @@ static int check_reduce_fcc_condition(struct smb_charger *chg)
 	}
 	chg->batt_health = val.intval;
 
-	pr_info("cp_charge_enabled(%d), charge_status(%d), charge_type(%d), batt_health(%d)\n",
+	pr_debug("cp_charge_enabled(%d), charge_status(%d), charge_type(%d), batt_health(%d)\n",
 			chg->cp_charge_enabled, chg->charge_status, chg->charge_type, chg->batt_health);
 
 	/* should add battery health later */
@@ -7031,7 +7031,7 @@ static void smblib_raise_qc3_vbus_work(struct work_struct *work)
 				chg->detect_low_power_qc3_charger = false;
 			if (chg->use_bq_pump)
 				vote(chg->usb_icl_votable, HVDCP3_START_ICL_VOTER, false, 0);
-			pr_info("pd hard reset, no need to raise vbus now\n");
+			pr_debug("pd hard reset, no need to raise vbus now\n");
 			return;
 		}
 
@@ -7062,7 +7062,7 @@ static void smblib_raise_qc3_vbus_work(struct work_struct *work)
 		if (rc < 0)
 			pr_err("Couldn't get usb voltage rc=%d\n", rc);
 		vbus_now = val.intval;
-		pr_info("vbus_now is %d\n", vbus_now);
+		pr_debug("vbus_now is %d\n", vbus_now);
 
 		if (chg->snk_debug_acc_detected && usb_present)
 			vol_qc_ab_thr = VOL_THR_FOR_QC_CLASS_AB
@@ -7072,13 +7072,13 @@ static void smblib_raise_qc3_vbus_work(struct work_struct *work)
 
 		if (vbus_now <= vol_qc_ab_thr
 				|| chg->batt_profile_fcc_ua <= QC_CLASS_A_CURRENT_UA) {
-			pr_info("qc_class_a charger is detected, batt_profile_fcc=%d\n", chg->batt_profile_fcc_ua);
+			pr_debug("qc_class_a charger is detected, batt_profile_fcc=%d\n", chg->batt_profile_fcc_ua);
 			chg->is_qc_class_a = true;
 			vote(chg->fcc_votable,
 					CLASSA_QC_FCC_VOTER, true, QC_CLASS_A_CURRENT_UA);
 		} else {
 			chg->is_qc_class_b = true;
-			pr_info("qc_class_b charger is detected\n");
+			pr_debug("qc_class_b charger is detected\n");
 		}
 		rc = smblib_force_vbus_voltage(chg, FORCE_5V_BIT);
 		if (rc < 0)
@@ -7239,7 +7239,7 @@ static void smblib_handle_hvdcp_3p0_auth_done(struct smb_charger *chg,
 		}
 	} else if ((apsd_result->bit & QC_2P0_BIT)
 			&& (!chg->qc2_unsupported)) {
-		pr_info("force 9V for QC2 charger\n");
+		pr_debug("force 9V for QC2 charger\n");
 		rc = smblib_force_vbus_voltage(chg, FORCE_9V_BIT);
 		if (rc < 0)
 			pr_err("Failed to force 9V\n");
@@ -8588,7 +8588,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 	if (rc < 0)
 		return;
 
-	pr_err("input_present: %d\n", input_present);
+	pr_debug("input_present: %d\n", input_present);
 	if (input_present == INPUT_NOT_PRESENT) {
 		if (is_client_vote_enabled(chg->fv_votable,
 						SIX_PIN_VFLOAT_VOTER))
@@ -8600,7 +8600,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 	}
 
 	if (chg->start_step_vbat >= VBAT_FOR_STEP_MIN_UV) {
-		pr_err("start step vbat is too high, no need do step charge\n");
+		pr_debug("start step vbat is too high, no need do step charge\n");
 		return;
 	}
 
@@ -8621,7 +8621,7 @@ static void smblib_six_pin_batt_step_chg_work(struct work_struct *work)
 		return;
 	}
 	main_charge_type = pval.intval;
-	pr_err("main_charge_type: %d\n", main_charge_type);
+	pr_debug("main_charge_type: %d\n", main_charge_type);
 
 	if (main_charge_type == POWER_SUPPLY_CHARGE_TYPE_TAPER)
 		chg->trigger_taper_count++;

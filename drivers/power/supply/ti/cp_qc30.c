@@ -237,7 +237,7 @@ static int qc3_get_batt_current_thermal_level(int *level)
 		return rc;
 	}
 
-	pr_err("val.intval: %d\n", val.intval);
+	pr_debug("val.intval: %d\n", val.intval);
 
 	*level = val.intval;
 	return rc;
@@ -508,7 +508,7 @@ static int cp_check_fc_enabled(void)
 	if (!ret)
 		pm_state.bq2597x.charge_enabled = !!val.intval;
 
-	pr_info("pm_state.bq2597x.charge_enabled: %d\n",
+	pr_debug("pm_state.bq2597x.charge_enabled: %d\n",
 			pm_state.bq2597x.charge_enabled);
 	return ret;
 }
@@ -528,7 +528,7 @@ static int cp_check_sw_enabled(void)
 	if (!ret)
 		pm_state.sw_chager.charge_enabled = !!val.intval;
 
-	pr_info("pm_state.sw_chager.charge_enabled: %d\n",
+	pr_debug("pm_state.sw_chager.charge_enabled: %d\n",
 			pm_state.sw_chager.charge_enabled);
 	return ret;
 }
@@ -548,7 +548,7 @@ static int cp_check_sw_limited(void)
 	if (!ret)
 		pm_state.sw_chager.charge_limited = !!val.intval;
 
-	pr_info("pm_state.sw_chager.charge_limited: %d\n",
+	pr_debug("pm_state.sw_chager.charge_limited: %d\n",
 			pm_state.sw_chager.charge_limited);
 	return ret;
 }
@@ -693,7 +693,7 @@ static int cp_config_max_vbat(void)
 	else
 		sys_config.bat_volt_lp_lmt = g_chip->bat_volt_max;
 
-	pr_info("config max_vbat, ffc_enable = %d, max_vbat = %d\n", pm_state.bms_fastcharge_mode, sys_config.bat_volt_lp_lmt);
+	pr_debug("config max_vbat, ffc_enable = %d, max_vbat = %d\n", pm_state.bms_fastcharge_mode, sys_config.bat_volt_lp_lmt);
 	return ret;
 }
 
@@ -776,9 +776,9 @@ static int cp_flash2_charge(unsigned int port)
 	qc3_get_batt_current_thermal_level(&thermal_level);
 	qc3_check_slowly_charging_enabled();
 	pm_state.is_temp_out_fc2_range = qc3_disable_cp_by_jeita_status();
-	pr_info("is_temp_out_fc2_range:%d\n", pm_state.is_temp_out_fc2_range);
+	pr_debug("is_temp_out_fc2_range:%d\n", pm_state.is_temp_out_fc2_range);
 
-	pr_info("bq2597x bat_ovp_fault: %d,bat_ocp_fault =%d,bus_ovp_fault=%d,bus_ocp_fault=%d,bat_ucp_alarm=%d,vbat_reg=%d\n",
+	pr_debug("bq2597x bat_ovp_fault: %d,bat_ocp_fault =%d,bus_ovp_fault=%d,bus_ocp_fault=%d,bat_ucp_alarm=%d,vbat_reg=%d\n",
 				pm_state.bq2597x.bat_ovp_fault,
 				pm_state.bq2597x.bat_ocp_fault,
 				pm_state.bq2597x.bus_ovp_fault,
@@ -811,7 +811,7 @@ static int cp_flash2_charge(unsigned int port)
 		}
 	}
 
-	pr_info("target: t_vbus=%d, t_ibus=%d(m:%d, p:%d), t_vbat=%d, t_ibat=%d(m:%d, p:%d)\n",
+	pr_debug("target: t_vbus=%d, t_ibus=%d(m:%d, p:%d), t_vbat=%d, t_ibat=%d(m:%d, p:%d)\n",
 			9500,
 			ibus_limit, sys_config.ibus_minus_deviation_val, sys_config.ibus_plus_deviation_val,
 			sys_config.bat_volt_lp_lmt,
@@ -1206,7 +1206,7 @@ static void cp_workfunc(struct work_struct *work)
 	cp_statemachine(0);
 
 	cp_get_usb_present();
-	pr_info("usb_present:%d, usb_type:%d\n", pm_state.usb_present, pm_state.usb_type);
+	pr_debug("usb_present:%d, usb_type:%d\n", pm_state.usb_present, pm_state.usb_type);
 	/* check whether usb is present */
 	if (pm_state.usb_present == 0) {
 		cp_set_qc_bus_protections(HVDCP3_NONE);

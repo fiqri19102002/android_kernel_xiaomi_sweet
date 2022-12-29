@@ -240,7 +240,7 @@ struct smb5 {
 
 static struct smb_charger *__smbchg;
 
-static int __debug_mask = PR_MISC | PR_PARALLEL | PR_OTG | PR_WLS | PR_OEM;
+static int __debug_mask;
 module_param_named(
 	debug_mask, __debug_mask, int, 0600
 );
@@ -419,14 +419,14 @@ static int read_step_chg_range_data_from_node(struct device_node *node,
 	length = rc;
 	per_tuple_length = sizeof(struct six_pin_step_data) / sizeof(u32);
 	if (length % per_tuple_length) {
-		pr_err("%s length (%d) should be multiple of %d\n",
+		pr_debug("%s length (%d) should be multiple of %d\n",
 				prop_str, length, per_tuple_length);
 		return -EINVAL;
 	}
 	tuples = length / per_tuple_length;
 
 	if (tuples > MAX_STEP_ENTRIES) {
-		pr_err("too many entries(%d), only %d allowed\n",
+		pr_debug("too many entries(%d), only %d allowed\n",
 				tuples, MAX_STEP_ENTRIES);
 		return -EINVAL;
 	}
@@ -535,13 +535,13 @@ static int smb5_parse_dt(struct smb5 *chip)
 
 	rc = of_property_read_u32(node, "mi,ffc-low-tbat", &chg->ffc_low_tbat);
 	if (rc < 0) {
-		pr_info("use default ffc_low_tbat\n");
+		pr_debug("use default ffc_low_tbat\n");
 		chg->ffc_low_tbat = DEFAULT_FFC_LOW_TBAT;
 	}
 
 	rc = of_property_read_u32(node, "mi,ffc-high-tbat", &chg->ffc_high_tbat);
 	if (rc < 0) {
-		pr_info("use default ffc_high_tbat\n");
+		pr_debug("use default ffc_high_tbat\n");
 		chg->ffc_high_tbat = DEFAULT_FFC_HIGH_TBAT;
 	}
 
@@ -576,7 +576,7 @@ static int smb5_parse_dt(struct smb5 *chip)
 	rc = of_property_read_u32(node, "mi,fcc-calibrate-ua", &chg->fcc_calibrate);
 	if (rc < 0)
 		chg->fcc_calibrate = 0;
-	pr_info("fcc_calibrate = %d\n", chg->fcc_calibrate);
+	pr_debug("fcc_calibrate = %d\n", chg->fcc_calibrate);
 
 	rc = of_property_read_u32(node,
 				"qcom,fv-max-uv", &chip->dt.batt_profile_fv_uv);
