@@ -30,6 +30,12 @@ DISTRO=$(source /etc/os-release && echo ${NAME})
 PROCS=$(nproc --all)
 export PROCS
 
+# Get total RAM
+RAM_INFO=$(free -m)
+TOTAL_RAM=$(echo "$RAM_INFO" | awk '/^Mem:/{print $2}')
+TOTAL_RAM_GB=$(awk "BEGIN {printf \"%.0f\", $TOTAL_RAM/1024}")
+export TOTAL_RAM_GB
+
 # Set date and time
 DATE=$(TZ=Asia/Jakarta date)
 
@@ -86,6 +92,30 @@ tg_post_build() {
         "$2"
 }
 
+# Set function for enable/disable compiler optimizations
+compiler_opt() {
+	if [[ $PROCS -gt 4 && $TOTAL_RAM_GB -ge 8 ]]; then
+		echo -e "Detected $PROCS core CPU and $TOTAL_RAM_GB GB RAM, this will enable compiler optimizations."
+		if [ $COMPILER == "clang" ]; then
+			sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/CONFIG_GCC_GRAPHITE=y/# CONFIG_GCC_GRAPHITE is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		elif [ $COMPILER == "gcc" ]; then
+			sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/# CONFIG_LTO_NONE is not set/CONFIG_LTO_NONE=y/g' arch/arm64/configs/vendor/sweet_defconfig
+		fi
+	elif [[ $PROCS -le 4 && $TOTAL_RAM_GB -lt 8 ]]; then
+		echo -e "Detected $PROCS core CPU and $TOTAL_RAM_GB GB RAM, this will disable compiler optimizations."
+		# Disable optimizations for Clang
+		sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		sed -i 's/# CONFIG_LTO_NONE is not set/CONFIG_LTO_NONE=y/g' arch/arm64/configs/vendor/sweet_defconfig
+		# Disable optimizations for GCC
+		sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		sed -i 's/CONFIG_GCC_GRAPHITE=y/# CONFIG_GCC_GRAPHITE is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+	fi
+}
+
 # Set function for cloning repository
 clone() {
 	# Clone AnyKernel3
@@ -131,6 +161,7 @@ compile() {
 		            "<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>" \
 		            "<b>Host CPU Name : </b><code>$CPU_NAME</code>" \
 		            "<b>Host Core Count : </b><code>$PROCS core(s)</code>" \
+		            "<b>Host RAM Count : </b><code>$TOTAL_RAM_GB GB</code>" \
 		            "<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>" \
 		            "<b>Branch : </b><code>$BRANCH</code>" \
 		            "<b>Last Commit : </b><code>$COMMIT_HEAD</code>"
@@ -155,10 +186,16 @@ compile() {
 	DIFF=$((BUILD_END - BUILD_START))
 	if [ -f "$IMG_DIR"/Image.gz-dtb ]; then
 		echo -e "Kernel successfully compiled"
+		if [ $LOCALBUILD == "1" ]; then
+			git restore arch/arm64/configs/vendor/sweet_defconfig
+		fi
 	elif ! [ -f "$IMG_DIR"/Image.gz-dtb ]; then
 		echo -e "Kernel compilation failed"
 		if [ $LOCALBUILD == "0" ]; then
 			tg_post_msg "<b>Build failed to compile after $((DIFF / 60)) minute(s) and $((DIFF % 60)) seconds</b>"
+		fi
+		if [ $LOCALBUILD == "1" ]; then
+			git restore arch/arm64/configs/vendor/sweet_defconfig
 		fi
 		exit 1
 	fi
@@ -196,6 +233,7 @@ gen_zip() {
 }
 
 clone
+compiler_opt
 compile
 set_naming
 gen_zip
