@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,6 +31,7 @@
 #include "dsi-panel-sharp-qsync-wqhd-video.dtsi"
 #include "dsi-panel-sharp-qsync-fhd-video.dtsi"
 #include "dsi-panel-sharp-qsync-fhd-cmd.dtsi"
+#include "dsi-panel-k6-38-0c-0a-fhd-dsc-video.dtsi"
 #include <dt-bindings/clock/mdss-10nm-pll-clk.h>
 
 &soc {
@@ -62,7 +64,6 @@
 			qcom,supply-max-voltage = <6000000>;
 			qcom,supply-enable-load = <100000>;
 			qcom,supply-disable-load = <100>;
-			qcom,supply-post-on-sleep = <20>;
 		};
 	};
 
@@ -87,8 +88,8 @@
 		qcom,panel-supply-entry@0 {
 			reg = <0>;
 			qcom,supply-name = "vddio";
-			qcom,supply-min-voltage = <1800000>;
-			qcom,supply-max-voltage = <1904000>;
+			qcom,supply-min-voltage = <1880000>;
+			qcom,supply-max-voltage = <1880000>;
 			qcom,supply-enable-load = <32000>;
 			qcom,supply-disable-load = <80>;
 		};
@@ -347,6 +348,17 @@
 		qcom,dsi-panel = <&dsi_sharp_qsync_fhd_cmd>;
 	};
 
+	dsi_k6_38_0c_0a_fhd_dsc_video_display: qcom,dsi-display@34 {
+		label = "dsi_k6_38_0c_0a_fhd_dsc_video_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_k6_38_0c_0a_fhd_dsc_video>;
+	};
+
 	sde_dsi: qcom,dsi-display {
 		compatible = "qcom,dsi-display";
 
@@ -399,7 +411,8 @@
 			&dsi_sharp_qsync_wqhd_cmd_display
 			&dsi_sharp_qsync_wqhd_video_display
 			&dsi_sharp_qsync_fhd_video_display
-			&dsi_sharp_qsync_fhd_cmd_display>;
+			&dsi_sharp_qsync_fhd_cmd_display
+			&dsi_k6_38_0c_0a_fhd_dsc_video_display>;
 
 	};
 
@@ -452,13 +465,6 @@
 &dsi_sw43404_amoled_video {
 	qcom,mdss-dsi-t-clk-post = <0x0A>;
 	qcom,mdss-dsi-t-clk-pre = <0x21>;
-	qcom,esd-check-enabled;
-	qcom,mdss-dsi-panel-status-check-mode = "reg_read";
-	qcom,mdss-dsi-panel-status-command = [06 01 00 01 00 00 01 0a];
-	qcom,mdss-dsi-panel-status-command-state = "dsi_hs_mode";
-	qcom,mdss-dsi-panel-status-value = <0x9c>;
-	qcom,mdss-dsi-panel-on-check-value = <0x9c>;
-	qcom,mdss-dsi-panel-status-read-length = <1>;
 	qcom,dsi-supported-dfps-list = <60 57 55>;
 	qcom,mdss-dsi-pan-enable-dynamic-fps;
 	qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode_hfp";
@@ -879,6 +885,19 @@
 				04 02 02 04 00];
 			qcom,mdss-mdp-transfer-time-us = <5800>;
 			qcom,display-topology = <2 2 2>;
+			qcom,default-topology-index = <0>;
+		};
+	};
+};
+
+&dsi_k6_38_0c_0a_fhd_dsc_video {
+	qcom,mdss-dsi-t-clk-post = <0x0F>;
+	qcom,mdss-dsi-t-clk-pre = <0x37>;
+	qcom,mdss-dsi-display-timings {
+		timing@0{
+			qcom,mdss-dsi-panel-phy-timings = [00 24 0a 0a 26 25 09
+			    0a 06 02 04 00];
+			qcom,display-topology = <1 1 1>;
 			qcom,default-topology-index = <0>;
 		};
 	};
