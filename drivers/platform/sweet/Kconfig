@@ -1,0 +1,5 @@
+config MACH_XIAOMI_SWEET
+	bool "Xiaomi Redmi Note 10 Pro (Max)"
+	depends on ARCH_SDMMAGPIE
+	help
+	  Support for Xiaomi Redmi Note 10 Pro (Max) codename sweet.
