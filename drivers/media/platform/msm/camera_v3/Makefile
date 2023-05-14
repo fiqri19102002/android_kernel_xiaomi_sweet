@@ -1,0 +1,14 @@
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_req_mgr/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_hyp_intf/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_utils/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_core/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_sync/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_smmu/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_cpas/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_cdm/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_isp/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_sensor_module/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_icp/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_jpeg/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_fd/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_lrme/

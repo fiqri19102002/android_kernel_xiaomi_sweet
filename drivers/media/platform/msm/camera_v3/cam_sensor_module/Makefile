@@ -1,0 +1,10 @@
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_res_mgr/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_sensor_utils/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_cci/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_sensor_io/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_csiphy/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_actuator/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_sensor/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_flash/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_eeprom/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += cam_ois/

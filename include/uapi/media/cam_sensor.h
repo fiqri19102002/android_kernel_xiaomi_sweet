@@ -115,6 +115,10 @@ struct cam_ois_opcode {
 	uint32_t coeff;
 	uint32_t pheripheral;
 	uint32_t memory;
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+	uint8_t  fw_addr_type;
+	uint8_t  is_addr_increase;
+#endif
 } __attribute__((packed));
 
 /**
@@ -134,6 +138,9 @@ struct cam_cmd_ois_info {
 	uint8_t               cmd_type;
 	uint8_t               ois_fw_flag;
 	uint8_t               is_ois_calib;
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+	uint8_t               is_ois_pre_init;
+#endif
 	char                  ois_name[MAX_OIS_NAME_SIZE];
 	struct cam_ois_opcode opcode;
 } __attribute__((packed));
@@ -370,6 +377,9 @@ struct cam_sensor_acquire_dev {
 	uint32_t    handle_type;
 	uint32_t    reserved;
 	uint64_t    info_handle;
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+	uint32_t    operation_mode;
+#endif
 } __attribute__((packed));
 
 /**

@@ -35,7 +35,11 @@
  * Max handles supported by cam_req_mgr
  * It includes both session and device handles
  */
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+#define CAM_REQ_MGR_MAX_HANDLES           182
+#else
 #define CAM_REQ_MGR_MAX_HANDLES           64
+#endif
 #define CAM_REQ_MGR_MAX_HANDLES_V2        128
 #define MAX_LINKS_PER_SESSION             2
 
@@ -274,7 +278,11 @@ struct cam_req_mgr_link_control {
 #define CAM_MEM_MMU_MAX_HANDLE                  16
 
 /* Maximum allowed buffers in existence */
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+#define CAM_MEM_BUFQ_MAX                        1536
+#else
 #define CAM_MEM_BUFQ_MAX                        1024
+#endif
 
 #define CAM_MEM_MGR_SECURE_BIT_POS              15
 #define CAM_MEM_MGR_HDL_IDX_SIZE                15

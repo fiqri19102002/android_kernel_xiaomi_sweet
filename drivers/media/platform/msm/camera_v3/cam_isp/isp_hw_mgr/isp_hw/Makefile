@@ -1,0 +1,2 @@
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += ife_csid_hw/
+obj-$(CONFIG_SPECTRA_CAMERA_UPGRADE) += vfe_hw/
