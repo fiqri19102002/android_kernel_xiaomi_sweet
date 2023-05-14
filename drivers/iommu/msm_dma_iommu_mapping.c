@@ -1,4 +1,5 @@
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -225,8 +226,9 @@ static inline int __msm_dma_map_sg(struct device *dev, struct scatterlist *sg,
 		iommu_map->buf_start_addr = sg_phys(sg);
 
 		kref_init(&iommu_map->ref);
-		if (late_unmap)
+		if (late_unmap) {
 			kref_get(&iommu_map->ref);
+		}
 		iommu_map->meta = iommu_meta;
 		msm_iommu_add(iommu_meta, iommu_map);
 
@@ -292,7 +294,6 @@ out:
 		msm_iommu_meta_put(iommu_meta);
 	}
 	return ret;
-
 }
 
 /*
@@ -466,8 +467,9 @@ void msm_dma_buf_freed(void *buffer)
 	mutex_lock(&meta->lock);
 
 	list_for_each_entry_safe(iommu_map, iommu_map_next, &meta->iommu_maps,
-				 lnode)
+				 lnode) {
 		kref_put(&iommu_map->ref, msm_iommu_map_release);
+	}
 
 	if (!list_empty(&meta->iommu_maps)) {
 		WARN(1, "%s: DMA buffer %p destroyed with outstanding iommu mappings\n",
