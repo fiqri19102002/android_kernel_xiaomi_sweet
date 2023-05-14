@@ -300,6 +300,12 @@ static int msm_config_group_get(struct pinctrl_dev *pctldev,
 	int ret;
 	u32 val;
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	/* gpio 0~3 is FP spi, gpio 59~62 is NFC spi */
+	if (group < 4 || (group > 58 && group < 63))
+		return 0;
+#endif
+
 	g = &pctrl->soc->groups[group];
 	base = reassign_pctrl_reg(pctrl->soc, group);
 
@@ -622,6 +628,11 @@ static void msm_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 	unsigned i;
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		/* gpio 0~3 is FP spi, gpio 59~62 is NFC spi */
+		if (i < 4 || (i > 58 && i < 63))
+			continue;
+#endif
 		msm_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}
