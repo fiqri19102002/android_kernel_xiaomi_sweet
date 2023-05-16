@@ -4,6 +4,7 @@
  * This code is based on drivers/scsi/ufs/ufshcd.c
  * Copyright (C) 2011-2013 Samsung India Software Operations
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * Authors:
  *	Santosh Yaraganavi <santosh.sy@samsung.com>
@@ -221,10 +222,18 @@ static void ufshcd_update_uic_error_cnt(struct ufs_hba *hba, u32 reg, int type)
 /* Query request retries */
 #define QUERY_REQ_RETRIES 3
 /* Query request timeout */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define QUERY_REQ_TIMEOUT 3000 /* 3.0 seconds */
+#else
 #define QUERY_REQ_TIMEOUT 1500 /* 1.5 seconds */
+#endif
 
 /* Task management command timeout */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define TM_CMD_TIMEOUT	500 /* msecs */
+#else
 #define TM_CMD_TIMEOUT	100 /* msecs */
+#endif
 
 /* maximum number of retries for a general UIC command  */
 #define UFS_UIC_COMMAND_RETRIES 3
@@ -1756,7 +1765,11 @@ out:
 
 static int ufshcd_clock_scaling_prepare(struct ufs_hba *hba)
 {
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	#define DOORBELL_CLR_TOUT_US		(40 * 1000 * 1000) /* 40 sec */
+#else
 	#define DOORBELL_CLR_TOUT_US		(1000 * 1000) /* 1 sec */
+#endif
 	int ret = 0;
 	/*
 	 * make sure that there are no outstanding requests when
@@ -5628,7 +5641,11 @@ static int ufshcd_complete_dev_init(struct ufs_hba *hba)
 	 * Some vendor devices are taking longer time to complete its internal
 	 * initialization, so set fDeviceInit flag poll time to 5 secs
 	 */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	timeout = ktime_add_ms(ktime_get(), 8000);
+#else
 	timeout = ktime_add_ms(ktime_get(), 5000);
+#endif
 
 	/* poll for max. 5sec for fDeviceInit flag to clear */
 	while (1) {
