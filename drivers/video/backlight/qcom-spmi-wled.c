@@ -1,6 +1,7 @@
 /* Copyright (c) 2015, Sony Mobile Communications, AB.
  *
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -426,11 +427,22 @@ static int wled5_sample_hold_control(struct wled *wled, u16 brightness,
 	return rc;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define  WLED_CABC_THR 200
+#endif
 static int wled5_set_brightness(struct wled *wled, u16 brightness)
 {
 	int rc, offset;
 	u16 low_limit = wled->max_brightness * 1 / 1000;
 	u8 val, v[2], brightness_msb_mask;
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (brightness < WLED_CABC_THR) {
+		wled->cabc_config(wled, false);
+		brightness = brightness * 0x0B6C / 0xFFF;
+	} else
+		wled->cabc_config(wled, true);
+#endif
 
 	/* WLED5's lower limit is 0.1% */
 	if (brightness > 0 && brightness < low_limit)

@@ -3,6 +3,7 @@
  * Backlight Lowlevel Control Abstraction
  *
  * Copyright (C) 2003,2004 Hewlett-Packard Company
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  */
 
@@ -45,7 +46,17 @@ enum backlight_type {
 enum backlight_notification {
 	BACKLIGHT_REGISTERED,
 	BACKLIGHT_UNREGISTERED,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	BACKLIGHT_UPDATED,
+#endif
 };
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+enum backlight_brightness {
+	BACKLIGHT_OFF,
+	BACKLIGHT_ON,
+};
+#endif
 
 struct backlight_device;
 struct fb_info;
@@ -69,6 +80,9 @@ struct backlight_ops {
 struct backlight_properties {
 	/* Current User requested brightness (0 - max_brightness) */
 	int brightness;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	int brightness_clone;
+#endif
 	/* Maximal value for brightness (read-only) */
 	int max_brightness;
 	/* Current FB Power mode (0: full on, 1..3: power saving
