@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2020, The Linux Foundation.All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -202,6 +203,9 @@ struct dsi_display {
 	struct drm_connector *ext_conn;
 
 	const char *name;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	bool is_prim_display;
+#endif
 	const char *display_type;
 	const char *dsi_type;
 	struct list_head list;
@@ -614,6 +618,12 @@ void dsi_display_enable_event(struct drm_connector *connector,
 int dsi_display_set_backlight(struct drm_connector *connector,
 		void *display, u32 bl_lvl);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int dsi_panel_set_doze_backlight(struct dsi_display *display);
+
+ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf);
+#endif
+
 /**
  * dsi_display_check_status() - check if panel is dead or alive
  * @connector:          Pointer to drm connector structure
@@ -684,6 +694,20 @@ int dsi_display_pre_kickoff(struct drm_connector *connector,
 int dsi_display_pre_commit(void *display,
 		struct msm_display_conn_params *params);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+/**
+ * wp_info_show() - Print white point infomation
+ * @device:         Pointer to device
+ * @attr:           Pointer to device attribute
+ * @buf:            The buffer stored white point infomation
+ *
+ * Return: Type ssize_t
+ */
+ssize_t wp_info_show(struct device *device,
+		struct device_attribute *attr,
+		char *buf);
+#endif
+
 /**
  * dsi_display_get_dst_format() - get dst_format from DSI display
  * @connector:        Pointer to drm connector structure
@@ -711,5 +735,13 @@ int dsi_display_cont_splash_config(void *display);
  */
 int dsi_display_get_panel_vfp(void *display,
 	int h_active, int v_active);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+struct dsi_display *get_primary_display(void);
+#endif
+
+int dsi_display_cmd_engine_enable(struct dsi_display *display);
+int dsi_display_cmd_engine_disable(struct dsi_display *display);
+int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display);
 
 #endif /* _DSI_DISPLAY_H_ */

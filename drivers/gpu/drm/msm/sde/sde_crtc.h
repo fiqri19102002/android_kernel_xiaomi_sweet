@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Author: Rob Clark <robdclark@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -305,6 +306,9 @@ struct sde_crtc {
 
 	/* blob for histogram data */
 	struct drm_property_blob *hist_blob;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	bool is_primary_sde_crtc;
+#endif
 };
 
 #define to_sde_crtc(x) container_of(x, struct sde_crtc, base)
@@ -435,6 +439,12 @@ struct sde_crtc_state {
 	u32 padding_height;
 	u32 padding_active;
 	u32 padding_dummy;
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	bool finger_down;
+	bool dim_layer_status;
+	struct sde_hw_dim_layer *fingerprint_dim_layer;
+#endif
 
 	struct sde_crtc_respool rp;
 };
@@ -864,4 +874,9 @@ int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
  * @cstate:      Pointer to drm crtc state
  */
 void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+uint32_t sde_crtc_get_mi_fod_sync_info(struct sde_crtc_state *cstate);
+#endif
+
 #endif /* _SDE_CRTC_H_ */

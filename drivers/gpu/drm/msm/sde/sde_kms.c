@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Author: Rob Clark <robdclark@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1167,6 +1168,9 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 			pr_err("Connector Post kickoff failed rc=%d\n",
 					 rc);
 		}
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		sde_connector_fod_notify(connector);
+#endif
 	}
 
 	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
