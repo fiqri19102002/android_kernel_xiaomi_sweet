@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Author: Rob Clark <robdclark@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -79,6 +80,10 @@
 	} while (0)
 
 #define SDE_ERROR(fmt, ...) pr_err("[sde error]" fmt, ##__VA_ARGS__)
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define SDE_DEFERRED_ERROR(fmt, ...) printk_deferred(KERN_ERR "[sde error]" fmt, ##__VA_ARGS__)
+#endif
 
 #define POPULATE_RECT(rect, a, b, c, d, Q16_flag) \
 	do {						\

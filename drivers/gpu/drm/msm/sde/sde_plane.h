@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Author: Rob Clark <robdclark@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -397,5 +398,9 @@ void sde_plane_clear_ubwc_error(struct drm_plane *plane);
  */
 void sde_plane_setup_src_split_order(struct drm_plane *plane,
 		enum sde_sspp_multirect_index rect_mode, bool enable);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int sde_plane_check_fod_layer(const struct drm_plane_state *drm_state);
+#endif
 
 #endif /* _SDE_PLANE_H_ */
