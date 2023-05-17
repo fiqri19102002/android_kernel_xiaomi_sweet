@@ -1,4 +1,5 @@
 /* Copyright (c) 2012-2018, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -352,6 +353,10 @@ int q6audio_get_port_index(u16 port_id)
 		return IDX_AFE_PORT_ID_RX_CODEC_DMA_RX_6;
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_7:
 		return IDX_AFE_PORT_ID_RX_CODEC_DMA_RX_7;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	case AFE_PORT_ID_PSEUDOPORT_01:
+		return IDX_AFE_PORT_ID_PSEUDOPORT_01;
+#endif
 	case RT_PROXY_PORT_002_RX:
 		return IDX_RT_PROXY_PORT_002_RX;
 	case RT_PROXY_PORT_002_TX:
@@ -1091,6 +1096,9 @@ int q6audio_validate_port(u16 port_id)
 	case AFE_PORT_ID_TX_CODEC_DMA_TX_5:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_6:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_7:
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	case AFE_PORT_ID_PSEUDOPORT_01:
+#endif
 	case RT_PROXY_PORT_002_RX:
 	case RT_PROXY_PORT_002_TX:
 	{
