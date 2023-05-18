@@ -5,6 +5,7 @@
  * Copyright 2005 Openedhand Ltd.
  * Copyright (C) 2010 Slimlogic Ltd.
  * Copyright (C) 2010 Texas Instruments Inc.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * Authors: Liam Girdwood <lrg@ti.com>
  *          Mark Brown <broonie@opensource.wolfsonmicro.com>
@@ -45,8 +46,15 @@ static const struct snd_pcm_hardware no_host_hardware = {
 				  SNDRV_PCM_INFO_INTERLEAVED |
 				  SNDRV_PCM_INFO_PAUSE |
 				  SNDRV_PCM_INFO_RESUME,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
+				  SNDRV_PCM_FMTBIT_S24_LE |
+				  SNDRV_PCM_FMTBIT_S24_3LE |
+				  SNDRV_PCM_FMTBIT_S32_LE,
+#else
 	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
 				  SNDRV_PCM_FMTBIT_S32_LE,
+#endif
 	.period_bytes_min	= PAGE_SIZE >> 2,
 	.period_bytes_max	= PAGE_SIZE >> 1,
 	.periods_min		= 2,
