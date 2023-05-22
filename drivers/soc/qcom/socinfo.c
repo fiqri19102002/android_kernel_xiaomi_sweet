@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -71,6 +72,9 @@ enum {
 	HW_PLATFORM_HDK = 31,
 	HW_PLATFORM_IOT = 32,
 	HW_PLATFORM_IDP = 34,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	HW_PLATFORM_K6 = 46,
+#endif
 	HW_PLATFORM_INVALID
 };
 
@@ -95,7 +99,12 @@ const char *hw_platform[] = {
 	[HW_PLATFORM_TTP] = "TTP",
 	[HW_PLATFORM_HDK] = "HDK",
 	[HW_PLATFORM_IOT] = "IOT",
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	[HW_PLATFORM_IDP] = "IDP",
+	[HW_PLATFORM_K6] = "SWEET"
+#else
 	[HW_PLATFORM_IDP] = "IDP"
+#endif
 };
 
 enum {
@@ -411,7 +420,11 @@ static struct msm_soc_info cpu_of_id[] = {
 	[418] = {SDX_CPU_SDXPRAIRIE, "SDXPRAIRIE"},
 
 	/* sdmmagpie ID */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	[365] = {MSM_CPU_SDMMAGPIE, "SM7150"},
+#else
 	[365] = {MSM_CPU_SDMMAGPIE, "SDMMAGPIE"},
+#endif
 
 	/* sdmmagpiep ID */
 	[366] = {MSM_CPU_SDMMAGPIEP, "SDMMAGPIEP"},
