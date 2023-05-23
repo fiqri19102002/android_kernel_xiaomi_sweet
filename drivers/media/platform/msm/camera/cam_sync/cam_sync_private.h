@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,8 +32,13 @@
 #endif
 
 #define CAM_SYNC_OBJ_NAME_LEN           64
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define CAM_SYNC_MAX_OBJS               1600
+#define CAM_SYNC_MAX_V4L2_EVENTS        200
+#else
 #define CAM_SYNC_MAX_OBJS               1024
 #define CAM_SYNC_MAX_V4L2_EVENTS        50
+#endif
 #define CAM_SYNC_DEBUG_FILENAME         "cam_debug"
 #define CAM_SYNC_DEBUG_BASEDIR          "cam"
 #define CAM_SYNC_DEBUG_BUF_SIZE         32

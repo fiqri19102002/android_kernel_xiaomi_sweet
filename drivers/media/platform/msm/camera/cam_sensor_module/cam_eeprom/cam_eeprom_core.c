@@ -1,5 +1,6 @@
 /* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +21,11 @@
 #include "cam_debug_util.h"
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
+
+#ifdef CONFIG_LDO_WL2866D
+extern int wl2866d_camera_power_up_eeprom(void);
+extern int wl2866d_camera_power_down_eeprom(void);
+#endif
 
 /**
  * cam_eeprom_read_memory() - read map data into buffer

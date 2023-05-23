@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,7 +35,11 @@
 
 #define PROPERTY_MAXSIZE 32
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define MSM_EEPROM_MEMORY_MAP_MAX_SIZE         128
+#else
 #define MSM_EEPROM_MEMORY_MAP_MAX_SIZE         80
+#endif
 #define MSM_EEPROM_MAX_MEM_MAP_CNT             100
 #define MSM_EEPROM_MEM_MAP_PROPERTIES_CNT      8
 

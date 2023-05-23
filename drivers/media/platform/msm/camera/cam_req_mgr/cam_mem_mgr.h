@@ -1,4 +1,5 @@
 /* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,7 +19,11 @@
 #include <media/cam_req_mgr.h>
 #include "cam_mem_mgr_api.h"
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define CAM_MEM_BUFQ_MAX 1536
+#else
 #define CAM_MEM_BUFQ_MAX 1024
+#endif
 
 /* Enum for possible mem mgr states */
 enum cam_mem_mgr_state {

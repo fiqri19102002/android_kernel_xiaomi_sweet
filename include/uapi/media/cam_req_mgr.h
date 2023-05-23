@@ -274,7 +274,11 @@ struct cam_req_mgr_link_control {
 #define CAM_MEM_MMU_MAX_HANDLE                  16
 
 /* Maximum allowed buffers in existence */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define CAM_MEM_BUFQ_MAX                        1536
+#else
 #define CAM_MEM_BUFQ_MAX                        1024
+#endif
 
 #define CAM_MEM_MGR_SECURE_BIT_POS              15
 #define CAM_MEM_MGR_HDL_IDX_SIZE                15

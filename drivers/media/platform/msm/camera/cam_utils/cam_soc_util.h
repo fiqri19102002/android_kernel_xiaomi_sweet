@@ -1,4 +1,5 @@
 /* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -36,7 +37,11 @@
 #define CAM_SOC_MAX_BASE            CAM_SOC_MAX_BLOCK
 
 /* maximum number of device regulator */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define CAM_SOC_MAX_REGULATOR       10
+#else
 #define CAM_SOC_MAX_REGULATOR       5
+#endif
 
 /* maximum number of device clock */
 #define CAM_SOC_MAX_CLK             32

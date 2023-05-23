@@ -1,4 +1,5 @@
 /* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -40,6 +41,10 @@
 
 #define GET_SMMU_HDL(x, y) (((x) << COOKIE_SIZE) | ((y) & COOKIE_MASK))
 #define GET_SMMU_TABLE_IDX(x) (((x) >> COOKIE_SIZE) & COOKIE_MASK)
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+extern int iommu_dma_set(struct device *dev, const char *name, bool best_fit);
+#endif
 
 static int g_num_pf_handled = 4;
 module_param(g_num_pf_handled, int, 0644);
@@ -2043,6 +2048,43 @@ int cam_smmu_get_handle(char *identifier, int *handle_ptr)
 }
 EXPORT_SYMBOL(cam_smmu_get_handle);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int cam_smmu_mi_init(int handle)
+{
+	int ret = 0, idx;
+	struct cam_context_bank_info *cb;
+
+	if (handle == HANDLE_INIT) {
+		CAM_ERR(CAM_SMMU, "Error: Invalid handle");
+		return -EINVAL;
+	}
+
+	idx = GET_SMMU_TABLE_IDX(handle);
+	if (idx < 0 || idx >= iommu_cb_set.cb_num) {
+		CAM_ERR(CAM_SMMU, "Error: Index invalid. idx = %d hdl = %x",
+			idx, handle);
+		return -EINVAL;
+	}
+
+	mutex_lock(&iommu_cb_set.cb_info[idx].lock);
+	if (iommu_cb_set.cb_info[idx].handle != handle) {
+		CAM_ERR(CAM_SMMU,
+			"Error: hdl is not valid, table_hdl = %x, hdl = %x",
+			iommu_cb_set.cb_info[idx].handle, handle);
+		mutex_unlock(&iommu_cb_set.cb_info[idx].lock);
+		return -EINVAL;
+	}
+
+	cb = &iommu_cb_set.cb_info[idx];
+	iommu_dma_set(cb->dev, cb->name, true);
+
+	mutex_unlock(&iommu_cb_set.cb_info[idx].lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(cam_smmu_mi_init);
+#endif
+
 int cam_smmu_ops(int handle, enum cam_smmu_ops_param ops)
 {
 	int ret = 0, idx;
@@ -3179,6 +3221,9 @@ static int cam_smmu_setup_cb(struct cam_context_bank_info *cb,
 	struct device *dev)
 {
 	int rc = 0;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	int32_t stall_disable = 1;
+#endif
 
 	if (!cb || !dev) {
 		CAM_ERR(CAM_SMMU, "Error: invalid input params");
@@ -3245,6 +3290,15 @@ static int cam_smmu_setup_cb(struct cam_context_bank_info *cb,
 			CAM_ERR(CAM_SMMU,
 				"Error: failed to set non fatal fault attribute");
 		}
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		if (iommu_domain_set_attr(cb->mapping->domain,
+			DOMAIN_ATTR_CB_STALL_DISABLE,
+			&stall_disable) < 0) {
+			CAM_ERR(CAM_SMMU,
+				"Error: failed to set cb stall disable");
+		}
+#endif
 
 	} else {
 		CAM_ERR(CAM_SMMU, "Context bank does not have IO region");
