@@ -120,6 +120,11 @@ struct dsi_backlight_config {
 	u32 bl_scale_ad;
 	bool bl_inverted_dbv;
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	bool dcs_type_ss_ea;
+	bool dcs_type_ss_eb;
+#endif
+
 	int en_gpio;
 	/* PWM params */
 	struct pwm_device *pwm_bl;
