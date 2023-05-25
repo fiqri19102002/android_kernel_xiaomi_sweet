@@ -172,6 +172,11 @@ struct drm_panel_esd_config {
 	u8 *return_buf;
 	u8 *status_buf;
 	u32 groups;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	int esd_err_irq_gpio;
+	int esd_err_irq;
+	int esd_err_irq_flags;
+#endif
 };
 
 struct dsi_panel {
