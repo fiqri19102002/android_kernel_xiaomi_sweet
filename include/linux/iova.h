@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2006, Intel Corporation.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This file is released under the GPLv2.
  *
@@ -14,6 +15,9 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/rbtree.h>
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#include <linux/radix-tree.h>
+#endif
 #include <linux/atomic.h>
 #include <linux/dma-mapping.h>
 
@@ -94,6 +98,10 @@ struct iova_domain {
 						   flush-queues */
 	atomic_t fq_timer_on;			/* 1 when timer is active, 0
 						   when not */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	struct radix_tree_root rdroot;
+	bool best_fit;
+#endif
 };
 
 static inline unsigned long iova_size(struct iova *iova)
@@ -267,6 +275,14 @@ static inline struct iova *split_and_remove_iova(struct iova_domain *iovad,
 
 static inline void free_cpu_cached_iovas(unsigned int cpu,
 					 struct iova_domain *iovad)
+{
+}
+#endif
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+void iommu_debug_init(struct iova_domain *iovad, const char *name);
+#else
+static inline void iommu_debug_init(struct iova_domain *iovad, const char *name)
 {
 }
 #endif

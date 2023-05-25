@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 ARM Ltd.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -109,5 +110,13 @@ static inline void iommu_dma_get_resv_regions(struct device *dev, struct list_he
 }
 
 #endif	/* CONFIG_IOMMU_DMA */
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int iommu_dma_set(struct device *dev, const char *name, bool best_fit);
+#else
+static inline int iommu_dma_set(struct device *dev, const char *name, bool best_fit)
+{
+	return 0;
+}
+#endif  /* CONFIG_MACH_XIAOMI_SWEET */
 #endif	/* __KERNEL__ */
 #endif	/* __DMA_IOMMU_H */
