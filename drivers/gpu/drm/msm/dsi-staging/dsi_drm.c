@@ -352,6 +352,22 @@ int dsi_bridge_interface_enable(int timeout)
 	return ret;
 }
 EXPORT_SYMBOL(dsi_bridge_interface_enable);
+
+static int dsi_bridge_get_panel_info(struct drm_bridge *bridge, char *buf)
+{
+	int rc = 0;
+	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
+
+	if (!c_bridge) {
+		pr_err("Invalid params\n");
+		return rc;
+	}
+
+	if (c_bridge->display->name)
+		return snprintf(buf, PAGE_SIZE, c_bridge->display->name);
+
+	return rc;
+}
 #endif
 
 static void dsi_bridge_enable(struct drm_bridge *bridge)
@@ -710,6 +726,9 @@ static const struct drm_bridge_funcs dsi_bridge_ops = {
 	.disable      = dsi_bridge_disable,
 	.post_disable = dsi_bridge_post_disable,
 	.mode_set     = dsi_bridge_mode_set,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	.disp_get_panel_info = dsi_bridge_get_panel_info,
+#endif
 };
 
 int dsi_conn_set_info_blob(struct drm_connector *connector,

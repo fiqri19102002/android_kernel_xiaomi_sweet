@@ -378,6 +378,22 @@ void drm_bridge_pre_enable(struct drm_bridge *bridge)
 }
 EXPORT_SYMBOL(drm_bridge_pre_enable);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int drm_get_panel_info(struct drm_bridge *bridge, char *buf)
+{
+    int rc = 0;
+
+    if (!bridge)
+        return rc;
+
+    if (bridge->funcs->disp_get_panel_info)
+        return bridge->funcs->disp_get_panel_info(bridge, buf);
+
+    return rc;
+}
+EXPORT_SYMBOL(drm_get_panel_info);
+#endif
+
 /**
  * drm_bridge_enable - enables all bridges in the encoder chain
  * @bridge: bridge control structure
