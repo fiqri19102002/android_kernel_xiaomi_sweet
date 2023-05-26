@@ -2101,12 +2101,12 @@ int goodix_ts_fb_notifier_callback(struct notifier_block *self,
 		blank = *(int *)(fb_event->data);
 		flush_workqueue(core_data->event_wq);
 		if (event == MSM_DRM_EVENT_BLANK && blank == MSM_DRM_BLANK_UNBLANK) {
-			ts_notice("notifier tp event:%d, code:%d.", event, blank);
-			ts_info("touchpanel resume");
+			ts_debug("notifier tp event:%d, code:%d.", event, blank);
+			ts_debug("touchpanel resume");
 			queue_work(core_data->event_wq, &core_data->resume_work);
 		} else if (event == MSM_DRM_EVENT_BLANK && blank == MSM_DRM_BLANK_POWERDOWN) {
-			ts_notice("notifier tp event:%d, code:%d.", event, blank);
-			ts_info("touchpanel suspend by %s", blank == MSM_DRM_BLANK_POWERDOWN ? "blank" : "doze");
+			ts_debug("notifier tp event:%d, code:%d.", event, blank);
+			ts_debug("touchpanel suspend by %s", blank == MSM_DRM_BLANK_POWERDOWN ? "blank" : "doze");
 			queue_work(core_data->event_wq, &core_data->suspend_work);
 		}
 	}
