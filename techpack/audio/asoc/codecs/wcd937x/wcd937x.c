@@ -2955,10 +2955,10 @@ static int wcd937x_probe(struct platform_device *pdev)
 	struct component_match *match = NULL;
 	int ret;
 
-	pr_info("%s() enter\n", __func__);
+	pr_debug("%s() enter\n", __func__);
 	ret = wcd937x_add_slave_components(&pdev->dev, &match);
 	if (ret) {
-		pr_info("%s() exit with %d\n", __func__, ret);
+		pr_debug("%s() exit with %d\n", __func__, ret);
 		return ret;
 	}
 

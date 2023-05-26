@@ -10842,7 +10842,7 @@ static int q6asm_get_asm_topology_apptype(struct q6asm_cal_info *cal_info)
 
 	if (0 == cal_info->topology_id) {
 		cal_info->topology_id = 0x10c68;
-		pr_err("%s: Correct using topology %d app_type %d\n", __func__,
+		pr_debug("%s: Correct using topology %d app_type %d\n", __func__,
 			cal_info->topology_id, cal_info->app_type);
 	}
 
@@ -10851,7 +10851,7 @@ static int q6asm_get_asm_topology_apptype(struct q6asm_cal_info *cal_info)
 unlock:
 	mutex_unlock(&cal_data[ASM_TOPOLOGY_CAL]->lock);
 done:
-	pr_info("%s: Using topology %d app_type %d\n", __func__,
+	pr_debug("%s: Using topology %d app_type %d\n", __func__,
 			cal_info->topology_id, cal_info->app_type);
 
 	return 0;
