@@ -957,7 +957,7 @@ int msm_pcm_routing_reg_stream_app_type_cfg(
 		goto done;
 	}
 
-	pr_err("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+	pr_debug("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
 		__func__, fedai_id, session_type, be_id,
 		cfg_data->app_type, cfg_data->acdb_dev_id,
 		cfg_data->sample_rate);
@@ -4095,7 +4095,7 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 			state, wakeup_ext_ec_ref, voip_ext_ec_common_ref);
 
 	if (state || (!state && wakeup_ext_ec_ref == 0 && voip_ext_ec_common_ref == 0)) {
-		pr_info("%s: update state!\n", __func__);
+		pr_debug("%s: update state!\n", __func__);
 		adm_ec_ref_rx_id(ec_ref_port_id);
 		mutex_unlock(&routing_lock);
 		snd_soc_dapm_mux_update_power(widget->dapm, kcontrol,
