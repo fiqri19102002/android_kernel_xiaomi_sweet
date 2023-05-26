@@ -48,7 +48,7 @@ extern struct class *mius_class;
 	pr_warn("[MIUS] : (%s) : " string "\n", __func__, ##arg)
 
 #define MI_PRINT_I(string, arg...) \
-	pr_info("[MIUS] : (%s) : " string "\n", __func__, ##arg)
+	pr_debug("[MIUS] : (%s) : " string "\n", __func__, ##arg)
 
 #define MI_PRINT_D(string, arg...) \
 	pr_debug("[MIUS] : (%s) : " string "\n", __func__, ##arg)
