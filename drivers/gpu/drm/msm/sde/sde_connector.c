@@ -2630,12 +2630,3 @@ int sde_connector_event_notify(struct drm_connector *connector, uint32_t type,
 
 	return ret;
 }
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-void sde_connector_mi_update_dimlayer_state(struct drm_connector *connector,
-	enum mi_dimlayer_type mi_dimlayer_type)
-{
-	struct sde_connector *c_conn = to_sde_connector(connector);
-	c_conn->mi_dimlayer_state.mi_dimlayer_type = mi_dimlayer_type;
-}
-#endif

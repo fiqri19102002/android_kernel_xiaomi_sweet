@@ -924,9 +924,4 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  */
 int sde_connector_esd_status(struct drm_connector *connector);
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-void sde_connector_mi_update_dimlayer_state(struct drm_connector *connector,
-        enum mi_dimlayer_type mi_dimlayer_type);
-#endif
-
 #endif /* _SDE_CONNECTOR_H_ */
