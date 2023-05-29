@@ -988,10 +988,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	if ((panel->last_bl_lvl == 0 || (panel->skip_dimmingon == STATE_DIM_RESTORE)) && bl_lvl) {
-		if (panel->panel_on_dimming_delay)
-			schedule_delayed_work(&panel->cmds_work,
-				msecs_to_jiffies(panel->panel_on_dimming_delay));
-
 		if (panel->skip_dimmingon == STATE_DIM_RESTORE)
 			panel->skip_dimmingon = STATE_NONE;
 	}
@@ -3808,15 +3804,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	}
 	pr_info("0x%x 0x%x enabled:%d\n",
 		xy_coordinate[0], xy_coordinate[1], panel->xy_coordinate_cmds.enabled);
-
-	rc = utils->read_u32(of_node,
-		"qcom,mdss-panel-on-dimming-delay", &panel->panel_on_dimming_delay);
-	if (rc) {
-		panel->panel_on_dimming_delay = 0;
-		pr_info("Panel on dimming delay disabled\n");
-	} else {
-		pr_info("Panel on dimming delay %d ms\n", panel->panel_on_dimming_delay);
-	}
 
 	INIT_DELAYED_WORK(&panel->cmds_work, panelon_dimming_enable_delayed_work);
 

@@ -261,7 +261,6 @@ struct dsi_panel {
 	enum dsi_panel_physical_type panel_type;
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	u32 panel_on_dimming_delay;
 	struct delayed_work cmds_work;
 	struct delayed_work nolp_bl_delay_work;
 	u32 last_bl_lvl;
