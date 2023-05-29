@@ -292,7 +292,6 @@ struct dsi_panel {
 	bool panel_dead_flag;
 	bool panel_max_frame_rate;
 
-	bool nolp_command_set_backlight_enabled;
 	bool oled_panel_video_mode;
 	int doze_lbm_brightness;
 	int doze_hbm_brightness;

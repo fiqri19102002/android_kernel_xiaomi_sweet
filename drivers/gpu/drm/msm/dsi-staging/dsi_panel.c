@@ -3867,14 +3867,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 		pr_info("hbm brightness %d \n", panel->hbm_brightness);
 	}
 
-	panel->nolp_command_set_backlight_enabled = utils->read_bool(of_node,
-			"qcom,mdss-dsi-nolp-command-set-backlight-enabled");
-	if (panel->nolp_command_set_backlight_enabled) {
-		pr_info("nolp command set backlight enabled.\n");
-	} else {
-		pr_info("nolp command set backlight disabled.\n");
-	}
-
 	panel->oled_panel_video_mode = utils->read_bool(of_node,
 			"qcom,mdss-dsi-oled-panel-video-mode");
 	if (panel->oled_panel_video_mode) {
@@ -4885,18 +4877,6 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 			"ibb", REGULATOR_MODE_NORMAL);
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	/*
-	 * Setting backlight in nolp command
-	 */
-	if (panel->nolp_command_set_backlight_enabled) {
-		cmds = priv_info->cmd_sets[DSI_CMD_SET_NOLP].cmds;
-		if (cmds) {
-			tx_buf = (u8 *)cmds[0].msg.tx_buf;
-			tx_buf[1] = (panel->last_bl_lvl >> 8) & 0x07;
-			tx_buf[2] = panel->last_bl_lvl & 0xff;
-		}
-	}
-
 	if (!panel->oled_panel_video_mode) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 		if (rc)
