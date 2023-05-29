@@ -676,43 +676,6 @@ static int dsi_display_write_panel(struct dsi_display *display,
 error:
 	return rc;
 }
-
-int sde_connector_update_hbm(struct sde_connector *c_conn)
-{
-	struct drm_connector *connector;
-	struct dsi_display *dsi_display;
-	struct sde_connector_state *c_state;
-	int rc = 0;
-	u32 dim_backlight;
-	struct dsi_cmd_desc *hbm_cmds = NULL;
-
-	if (!c_conn) {
-		SDE_ERROR("Invalid params sde_connector null\n");
-		return -EINVAL;
-	}
-
-	connector = &c_conn->base;
-
-	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI)
-		return rc;
-
-	c_state = to_sde_connector_state(connector->state);
-
-	dsi_display = c_conn->display;
-	if (!dsi_display || !dsi_display->panel || !dsi_display->drm_dev) {
-		SDE_ERROR("Invalid params(s) dsi_display %pK, panel %pK\n", dsi_display,
-			((dsi_display) ? dsi_display->panel : NULL),
-			((dsi_display) ? dsi_display->drm_dev : NULL));
-		return -EINVAL;
-	}
-
-	if (!c_conn->encoder || !c_conn->encoder->crtc ||
-	    !c_conn->encoder->crtc->state) {
-		return rc;
-	}
-
-	return rc;
-}
 #endif
 
 int sde_connector_pre_kickoff(struct drm_connector *connector)

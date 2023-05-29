@@ -927,8 +927,6 @@ int sde_connector_esd_status(struct drm_connector *connector);
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 void sde_connector_mi_update_dimlayer_state(struct drm_connector *connector,
         enum mi_dimlayer_type mi_dimlayer_type);
-
-int sde_connector_update_hbm(struct sde_connector *c_conn);
 #endif
 
 #endif /* _SDE_CONNECTOR_H_ */
