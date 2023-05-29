@@ -966,7 +966,7 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		break;
 	case DSI_BACKLIGHT_DCS:
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-		if((panel->oled_panel_video_mode && panel->in_aod && panel->doze_brightness != DOZE_BRIGHTNESS_INVALID)) {
+		if (panel->oled_panel_video_mode && panel->in_aod && panel->doze_brightness != DOZE_BRIGHTNESS_INVALID) {
 			pr_info("oled panel video mode need skip set backlight: %d, or set it later", bl_lvl);
 		} else {
 			rc = dsi_panel_update_backlight(panel, bl_lvl);
@@ -4871,7 +4871,7 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	if (!panel->oled_panel_video_mode)
 		panel->in_aod = false;
 
-	if (!panel->oled_panel_video_mode && (panel->bl_config.dcs_type_ss_eb)) {
+	if (!panel->oled_panel_video_mode && panel->bl_config.dcs_type_ss_eb) {
 		rc = dsi_panel_set_backlight(panel, panel->last_bl_lvl);
 	}
 #else
@@ -5126,7 +5126,16 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 
 	pr_info("[LCD] param_type = 0x%x\n", param);
 
+	if (!panel->panel_initialized) {
+		pr_err("[LCD] panel not ready!\n");
+		mutex_unlock(&panel->panel_lock);
+		return rc;
+	}
+
 	priv_info = panel->cur_mode->priv_info;
+
+	if ((param & 0x00F00000) == 0xD00000)
+		param = (param & 0x0FF00000);
 
 	/* set smart fps status */
 	if (param & 0xF0000000) {
