@@ -694,57 +694,6 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-enum {
-	DEMURA_STATUS_NONE = 0,
-	DEMURA_STATUS_DC_L1,
-	DEMURA_STATUS_DC_L2,
-	DEMURA_STATUS_LEVEL2,
-	DEMURA_STATUS_LEVEL8,
-	DEMURA_STATUS_LEVELD,
-	DEMURA_STATUS_MAX,
-};
-
-static int dsi_panel_update_backlight_demura_level(struct dsi_panel *panel, u32 bl_lvl)
-{
-	int rc = 0;
-
-	if (panel->in_aod || 0 == bl_lvl) {
-		pr_debug("skip set demura_level: in_aod=%d bkl=%d\n", panel->in_aod, bl_lvl);
-		return rc;
-	}
-
-	if (panel->dc_enable && panel->dc_demura_threshold) {
-		if (bl_lvl > panel->dc_demura_threshold &&
-			panel->backlight_demura_level != DEMURA_STATUS_DC_L1) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_DEMURA_L1);
-			panel->backlight_demura_level = DEMURA_STATUS_DC_L1;
-		} else if (bl_lvl <= panel->dc_demura_threshold &&
-			panel->backlight_demura_level != DEMURA_STATUS_DC_L2) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_DEMURA_L2);
-			panel->backlight_demura_level = DEMURA_STATUS_DC_L2;
-		}
-	} else {
-		if (bl_lvl > DEMURA_LEVEL_02 && panel->backlight_demura_level != DEMURA_STATUS_LEVEL2) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL02);
-			panel->backlight_demura_level = DEMURA_STATUS_LEVEL2;
-		} else if (bl_lvl >= DEMURA_LEVEL_08 && bl_lvl <= DEMURA_LEVEL_02 &&
-			panel->backlight_demura_level != DEMURA_STATUS_LEVEL8) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL08);
-			panel->backlight_demura_level = DEMURA_STATUS_LEVEL8;
-		} else if (bl_lvl >= DEMURA_LEVEL_0D && bl_lvl < DEMURA_LEVEL_08 &&
-			panel->backlight_demura_level != DEMURA_STATUS_LEVELD) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL0D);
-			panel->backlight_demura_level = DEMURA_STATUS_LEVELD;
-		}
-	}
-
-	pr_debug("backlight_demura_level: %d bkl: %d panel->dc_demura_threshold = %d\n",
-		panel->backlight_demura_level, bl_lvl, panel->dc_demura_threshold);
-	return rc;
-}
-#endif
-
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
@@ -783,10 +732,6 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		rc = mipi_dsi_dcs_set_display_brightness_ss(dsi, bl_lvl);
 	else
 		rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
-
-	/* For the f4_41 panel, we need to switch the DEMURA_LEVEL according to the value of the 51 register. */
-	if (panel->bl_config.xiaomi_f4_41_flag)
-		rc = dsi_panel_update_backlight_demura_level(panel, bl_lvl);
 
 	if (rc < 0)
 		pr_err("failed to update dcs backlight:%d\n", bl_temp);
@@ -2168,11 +2113,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-four-pluse-command",
 	"qcom,mdss-dsi-dispparam-flat-mode-on-command",
 	"qcom,mdss-dsi-dispparam-flat-mode-off-command",
-	"qcom,mdss-dsi-dispparam-demura-level2-command",
-	"qcom,mdss-dsi-dispparam-demura-level8-command",
-	"qcom,mdss-dsi-dispparam-demura-leveld-command",
-	"qcom,mdss-dsi-dispparam-dc-demura-l1-command",
-	"qcom,mdss-dsi-dispparam-dc-demura-l2-command",
 	"qcom,mdss-dsi-dispparam-dc-on-command",
 	"qcom,mdss-dsi-dispparam-dc-off-command",
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command",
@@ -2267,11 +2207,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-four-pluse-command-state",
 	"qcom,mdss-dsi-dispparam-flat-mode-on-command-state",
 	"qcom,mdss-dsi-dispparam-flat-mode-off-command-state",
-	"qcom,mdss-dsi-dispparam-demura-level2-command-state",
-	"qcom,mdss-dsi-dispparam-demura-level8-command-state",
-	"qcom,mdss-dsi-dispparam-demura-leveld-command-state",
-	"qcom,mdss-dsi-dispparam-dc-demura-l1-command-state",
-	"qcom,mdss-dsi-dispparam-dc-demura-l2-command-state",
 	"qcom,mdss-dsi-dispparam-dc-on-command-state",
 	"qcom,mdss-dsi-dispparam-dc-off-command-state",
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command-state",
@@ -4001,15 +3936,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	}
 
 	rc = of_property_read_u32(of_node,
-			"qcom,mdss-dsi-panel-dc-demura-threshold", &panel->dc_demura_threshold);
-	if (rc) {
-		panel->dc_demura_threshold = 0;
-		pr_info("dc demura disabled\n");
-	} else {
-		pr_info("dc demura threshold %d\n", panel->dc_demura_threshold);
-	}
-
-	rc = of_property_read_u32(of_node,
 			"qcom,mdss-dsi-panel-hbm-brightness", &panel->hbm_brightness);
 	if (rc) {
 		panel->hbm_brightness = 0;
@@ -4068,7 +3994,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	panel->backlight_delta = 1;
 	panel->in_aod = false;
 	panel->backlight_pulse_flag = false;
-	panel->backlight_demura_level = 0;
 
 	panel->dc_enable = false;
 
@@ -5545,7 +5470,7 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_DC_ON:
 		pr_info("DC on\n");
 		panel->dc_enable = true;
-		if ((panel->bl_config.xiaomi_f4_41_flag && panel->dc_demura_threshold) ||
+		if ((panel->bl_config.xiaomi_f4_41_flag) ||
 			panel->bl_config.xiaomi_f4_36_flag) {
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
 			if (rc)
@@ -5558,7 +5483,7 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_DC_OFF:
 		pr_info("DC off\n");
 		panel->dc_enable = false;
-		if ((panel->bl_config.xiaomi_f4_41_flag && panel->dc_demura_threshold) ||
+		if ((panel->bl_config.xiaomi_f4_41_flag) ||
 			panel->bl_config.xiaomi_f4_36_flag) {
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_OFF);
 			if (rc)
@@ -5662,18 +5587,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_FLAT_MODE_OFF:
 		pr_info("flat mode off\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_OFF);
-		break;
-	case DISPPARAM_DEMURA_LEVEL02:
-		pr_info("DEMURA LEVEL 02\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL02);
-		break;
-	case DISPPARAM_DEMURA_LEVEL08:
-		pr_info("DEMURA LEVEL 08\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL08);
-		break;
-	case DISPPARAM_DEMURA_LEVEL0D:
-		pr_info("DEMURA LEVEL 0D\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL0D);
 		break;
 	case DISPPARAM_IDLE_ON:
 		pr_info("idle on\n");
@@ -6043,7 +5956,7 @@ int dsi_panel_enable(struct dsi_panel *panel)
 					panel->name, rc);
 	}
 
-	if (panel->bl_config.xiaomi_f4_41_flag && panel->dc_enable && panel->dc_demura_threshold) {
+	if (panel->bl_config.xiaomi_f4_41_flag && panel->dc_enable) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
@@ -6060,7 +5973,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	panel->hbm_enabled = false;
 	panel->in_aod = false;
 	panel->backlight_pulse_flag = false;
-	panel->backlight_demura_level = 0;
 	panel->skip_dimmingon = STATE_NONE;
 	idle_status = false;
 #endif
@@ -6161,7 +6073,6 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	panel->hbm_enabled = false;
 	panel->in_aod = false;
 	panel->backlight_pulse_flag = false;
-	panel->backlight_demura_level = 0;
 #endif
 
 	mutex_unlock(&panel->panel_lock);

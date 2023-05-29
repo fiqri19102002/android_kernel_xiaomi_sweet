@@ -40,10 +40,6 @@
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 #define BUF_LEN_MAX    256
-
-#define DEMURA_LEVEL_02 256
-#define DEMURA_LEVEL_08 11
-#define DEMURA_LEVEL_0D 1
 #endif
 
 enum dsi_panel_rotation {
@@ -272,10 +268,8 @@ struct dsi_panel {
 	struct delayed_work nolp_bl_delay_work;
 	u32 last_bl_lvl;
 	s32 backlight_delta;
-	u32 backlight_demura_level; /* For the f4_41 panel */
 	u32 backlight_pulse_threshold;
 	/* DC bkl */
-	u32 dc_demura_threshold;
 	bool dc_enable;
 	bool backlight_pulse_flag; /* true = 4 pulse and false = 1 pulse */
 	u32 dc_threshold;
