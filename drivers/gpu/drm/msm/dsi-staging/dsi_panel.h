@@ -281,7 +281,6 @@ struct dsi_panel {
 	u32 hbm_off_51_index;
 
 	u8 panel_read_data[BUF_LEN_MAX];
-	struct dsi_read_config xy_coordinate_cmds;
 
 	bool in_aod; /* set  DISPPARAM_DOZE_BRIGHTNESS_HBM/LBM only in AOD */
 	int doze_brightness;

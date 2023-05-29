@@ -2091,7 +2091,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-hbm-off-command",
 	"qcom,mdss-dsi-displayoff-command",
 	"qcom,mdss-dsi-displayon-command",
-	"qcom,mdss-dsi-dispparam-xy-coordinate-command",
 	"qcom,mdss-dsi-read-brightness-command",
 	"qcom,mdss-dsi-dispparam-max-luminance-command",
 	"qcom,mdss-dsi-dispparam-max-luminance-valid-command",
@@ -2182,7 +2181,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-hbm-off-command-state",
 	"qcom,mdss-dsi-displayoff-command-state",
 	"qcom,mdss-dsi-displayon-command-state",
-	"qcom,mdss-dsi-dispparam-xy-coordinate-command-state",
 	"qcom,mdss-dsi-read-brightness-command-state",
 	"qcom,mdss-dsi-dispparam-max-luminance-command-state",
 	"qcom,mdss-dsi-dispparam-max-luminance-valid-command-state",
@@ -3771,13 +3769,11 @@ static void nolp_backlight_delayed_work(struct work_struct *work)
 	}
 }
 
-#define XY_COORDINATE_NUM    2
 static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 				     struct device_node *of_node)
 {
 	int rc = 0;
 	struct dsi_parser_utils *utils;
-	u32 xy_coordinate[XY_COORDINATE_NUM] = {0};
 
 	if (panel == NULL)
 		return -EINVAL;
@@ -3790,20 +3786,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	} else {
 		pr_info("Dispparam disabled.\n");
 	}
-
-	rc = of_property_read_u32_array(of_node, "qcom,mdss-dsi-panel-xy-coordinate",
-					xy_coordinate, XY_COORDINATE_NUM);
-	if (rc) {
-		pr_info("%s:%d, Unable to read panel xy coordinate\n",
-		       __func__, __LINE__);
-		panel->xy_coordinate_cmds.enabled = false;
-	} else {
-		panel->xy_coordinate_cmds.cmds_rlen = xy_coordinate[0];
-		panel->xy_coordinate_cmds.valid_bits = xy_coordinate[1];
-		panel->xy_coordinate_cmds.enabled = true;
-	}
-	pr_info("0x%x 0x%x enabled:%d\n",
-		xy_coordinate[0], xy_coordinate[1], panel->xy_coordinate_cmds.enabled);
 
 	INIT_DELAYED_WORK(&panel->cmds_work, panelon_dimming_enable_delayed_work);
 
@@ -5188,25 +5170,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_PAPERMODE7:
 		pr_info("paper mode 7\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER7);
-		break;
-	case DISPPARAM_WHITEPOINT_XY:
-		pr_info("read xy coordinate\n");
-
-		cmd_sets.cmds = panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_XY_COORDINATE].cmds;
-		if (panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_XY_COORDINATE].count)
-			cmd_sets.count = 1;
-		cmd_sets.state = panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_XY_COORDINATE].state;
-
-		rc = dsi_display_write_panel(panel, &cmd_sets);
-		if (rc) {
-			pr_err("[%s][%s] failed to send cmds, rc=%d\n", __func__, panel->name, rc);
-		} else {
-			panel->xy_coordinate_cmds.read_cmd = cmd_sets;
-			panel->xy_coordinate_cmds.read_cmd.cmds = &cmd_sets.cmds[1];
-			rc = dsi_display_read_panel(panel, &panel->xy_coordinate_cmds);
-			if (rc > 0)
-				handle_dsi_read_data(panel, &panel->xy_coordinate_cmds);
-		}
 		break;
 	default:
 		break;
