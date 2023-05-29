@@ -875,8 +875,4 @@ int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
  */
 void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state);
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-uint32_t sde_crtc_get_mi_fod_sync_info(struct sde_crtc_state *cstate);
-#endif
-
 #endif /* _SDE_CRTC_H_ */

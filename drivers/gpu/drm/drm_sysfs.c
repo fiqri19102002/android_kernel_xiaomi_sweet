@@ -364,63 +364,6 @@ static ssize_t disp_param_show(struct device *device,
 	return ret;
 }
 
-extern ssize_t get_fod_ui_status(struct drm_connector *connector);
-static ssize_t fod_ui_ready_show(struct device *device,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	struct drm_connector *connector = NULL;
-	u32 fod_ui_ready = 0;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return 0;
-
-	fod_ui_ready = get_fod_ui_status(connector);
-	return snprintf(buf, PAGE_SIZE, "%d\n", fod_ui_ready);
-}
-
-ssize_t xm_fod_dim_layer_alpha_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count);
-
-extern void set_fod_dimlayer_status(struct drm_connector *connector, bool enabled);
-ssize_t dim_layer_enable_store(struct device *device,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	struct drm_connector *connector = NULL;
-	bool fod_dimlayer_enabled = false;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return 0;
-
-	kstrtobool(buf, &fod_dimlayer_enabled);
-	set_fod_dimlayer_status(connector, fod_dimlayer_enabled);
-
-	pr_info("set fod dimlayer %s", fod_dimlayer_enabled ? "true" : "false");
-
-	return count;
-}
-
-extern bool get_fod_dimlayer_status(struct drm_connector *connector);
-static ssize_t dim_layer_enable_show(struct device *device,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct drm_connector *connector = NULL;
-	bool fod_dimlayer_enabled = false;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return 0;
-
-	fod_dimlayer_enabled = get_fod_dimlayer_status(connector);
-
-	return snprintf(buf, PAGE_SIZE, fod_dimlayer_enabled ? "enabled\n" : "disabled\n");
-}
-
 extern ssize_t smart_fps_value_show(struct device *device,
 			   struct device_attribute *attr,
 			   char *buf);
@@ -513,9 +456,7 @@ static DEVICE_ATTR_RO(panel_info);
 static DEVICE_ATTR_RW(disp_param);
 static DEVICE_ATTR_RO(doze_brightness);
 static DEVICE_ATTR_RW(dim_layer_enable);
-static DEVICE_ATTR(dim_alpha, S_IRUGO|S_IWUSR, NULL, xm_fod_dim_layer_alpha_store);
 static DEVICE_ATTR_RW(doze_backlight);
-static DEVICE_ATTR_RO(fod_ui_ready);
 static DEVICE_ATTR_RO(smart_fps_value);
 static DEVICE_ATTR_RO(dynamic_fps);
 static DEVICE_ATTR_RW(mipi_reg);
@@ -534,7 +475,6 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_dim_layer_enable.attr,
 	&dev_attr_doze_backlight.attr,
 	&dev_attr_dim_alpha.attr,
-	&dev_attr_fod_ui_ready.attr,
 	&dev_attr_smart_fps_value.attr,
 	&dev_attr_dynamic_fps.attr,
 	&dev_attr_mipi_reg.attr,

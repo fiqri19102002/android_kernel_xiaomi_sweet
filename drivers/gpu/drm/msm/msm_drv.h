@@ -109,9 +109,6 @@ enum msm_mdp_plane_property {
 
 	/* range properties */
 	PLANE_PROP_ZPOS = PLANE_PROP_BLOBCOUNT,
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	PLANE_PROP_FOD,
-#endif
 	PLANE_PROP_ALPHA,
 	PLANE_PROP_COLOR_FILL,
 	PLANE_PROP_H_DECIMATE,
@@ -173,9 +170,6 @@ enum msm_mdp_crtc_property {
 	CRTC_PROP_CAPTURE_OUTPUT,
 
 	CRTC_PROP_IDLE_PC_STATE,
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	CRCT_PROP_MI_FOD_SYNC_INFO,
-#endif
 
 	/* total # of properties */
 	CRTC_PROP_COUNT

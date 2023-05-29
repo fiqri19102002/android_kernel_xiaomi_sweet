@@ -677,28 +677,6 @@ error:
 	return rc;
 }
 
-void sde_crtc_fod_ui_ready(struct dsi_display *display, int type, int value)
-{
-	if (!display)
-		return;
-
-	if (type == 1) { /* HBM */
-		if (value == 0)
-			display->panel->fod_ui_ready &= ~0x01;
-		else if (value == 1)
-			display->panel->fod_ui_ready |= 0x01;
-	}
-
-	if (type == 2) { /* ICON */
-		if (value == 0)
-			display->panel->fod_ui_ready &= ~0x0002;
-		else if (value == 1)
-			display->panel->fod_ui_ready |= 0x02;
-	}
-	pr_info("sde_crtc_fod_ui_ready notify: %d\n", display->panel->fod_ui_ready);
-	sysfs_notify(&display->drm_conn->kdev->kobj, NULL, "fod_ui_ready");
-}
-
 int sde_connector_update_hbm(struct sde_connector *c_conn)
 {
 	struct drm_connector *connector;
@@ -729,111 +707,34 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 		return -EINVAL;
 	}
 
-	if (!dsi_display->panel->fod_dimlayer_enabled) {
-		return rc;
-	}
-
 	if (!c_conn->encoder || !c_conn->encoder->crtc ||
 	    !c_conn->encoder->crtc->state) {
 		return rc;
 	}
 
-	hbm_overlay = c_conn->mi_dimlayer_state.mi_dimlayer_type & MI_DIMLAYER_FOD_HBM_OVERLAY;
-	pr_debug("hbm_overlay:%d, mi_dimlayer_type:%d fod_hbm_enabled:%d dc_enable:%d\n", 
-		hbm_overlay, c_conn->mi_dimlayer_state.mi_dimlayer_type, dsi_display->panel->fod_dimlayer_hbm_enabled, dsi_display->panel->dc_enable);
 	if (!hbm_overlay) {
-		if (dsi_display->panel->fod_dimlayer_hbm_enabled) {
-			mutex_lock(&dsi_display->panel->panel_lock);
-			sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-			if (dsi_display->drm_dev && ((dsi_display->drm_dev->doze_state == DRM_BLANK_LP1) ||
-				(dsi_display->drm_dev->doze_state == DRM_BLANK_LP2))) {
-				if (dsi_display->drm_dev->doze_brightness == DOZE_BRIGHTNESS_HBM) {
-					pr_info("hbm fod off doze hbm on\n");
-					dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DOZE_HBM]);
-				} else if (dsi_display->drm_dev->doze_brightness == DOZE_BRIGHTNESS_LBM) {
-					pr_info("hbm fod off doze lbm on\n");
-					dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DOZE_LBM]);
-				}
-				sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-				dsi_display->panel->in_aod = true;
-				dsi_display->panel->skip_dimmingon = STATE_DIM_BLOCK;
+		mutex_lock(&dsi_display->panel->panel_lock);
+		if (dsi_display->panel->bl_config.samsung_prepare_hbm_flag) {
+			rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_DIMMINGON]);
+
+			if (dsi_display->panel->last_bl_lvl >= dsi_display->panel->bl_config.bl_max_level - 1) {
+				if (dsi_display->panel->backlight_delta == -1)
+					dsi_display->panel->backlight_delta = -2;
+				else
+					dsi_display->panel->backlight_delta = -1;
 			} else {
-				pr_info("HBM fod off\n");
-				if (dsi_display->panel->f4_51_ctrl_flag) {
-					pr_info("f4_51 HBM fod off\n");
-					hbm_cmds = dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_FOD_OFF].cmds;
-					if (hbm_cmds) {
-						((u8 *)hbm_cmds[1].msg.tx_buf)[1] = (dsi_display->panel->last_bl_lvl >> 8) & 0x07;
-						((u8 *)hbm_cmds[1].msg.tx_buf)[2] = dsi_display->panel->last_bl_lvl & 0xff;
-					}
-					rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_FOD_OFF]);
-				}  else {
-					if (dsi_display->panel->elvss_dimming_check_enable) {
-						rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->hbm_fod_off);
-					} else {
-						rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_FOD_OFF]);
-					}
-				}
-
-				if (dsi_display->panel->bl_config.xiaomi_f4_41_flag || dsi_display->panel->bl_config.dcs_type_ss_eb) {
-					sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-				}
-
-				if (dsi_display->panel->bl_config.dcs_type_ss_eb) {
-					sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-				}
-
-				dsi_display->panel->skip_dimmingon = STATE_DIM_RESTORE;
-
-			}
-			dsi_display->panel->fod_dimlayer_hbm_enabled = false;
-			mutex_unlock(&dsi_display->panel->panel_lock);
-			if (rc) {
-				pr_err("failed to send DSI_CMD_HBM_OFF cmds, rc=%d\n", rc);
-				return rc;
-			}
-		}
-	} else {
-		if (!dsi_display->panel->fod_dimlayer_hbm_enabled) {
-			mutex_lock(&dsi_display->panel->panel_lock);
-			if (dsi_display->panel->bl_config.samsung_prepare_hbm_flag) {
-				pr_info("fod set dimming on\n");
-				rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_DIMMINGON]);
-
-				if (dsi_display->panel->last_bl_lvl >= dsi_display->panel->bl_config.bl_max_level - 1) {
-					if (dsi_display->panel->backlight_delta == -1)
-						dsi_display->panel->backlight_delta = -2;
-					else
-						dsi_display->panel->backlight_delta = -1;
-				} else {
-					if (dsi_display->panel->backlight_delta == 1)
-						dsi_display->panel->backlight_delta = 2;
-					else
-						dsi_display->panel->backlight_delta = 1;
-				}
-				if (dsi_display->panel->fod_backlight_flag) {
-					if (dsi_display->panel->fod_target_backlight >= dsi_display->panel->bl_config.bl_max_level - 1) {
-						if (dsi_display->panel->backlight_delta == -1)
-							dsi_display->panel->backlight_delta = -2;
-						else
-							dsi_display->panel->backlight_delta = -1;
-					}
-					dim_backlight = dsi_display->panel->fod_target_backlight + dsi_display->panel->backlight_delta;
-				} else {
-					dim_backlight = dsi_display->panel->last_bl_lvl + dsi_display->panel->backlight_delta;
-				}
-				pr_info("backlight repeat:%d\n", dim_backlight);
-				rc = dsi_panel_set_backlight(dsi_display->panel, dim_backlight);
+				if (dsi_display->panel->backlight_delta == 1)
+					dsi_display->panel->backlight_delta = 2;
+				else
+					dsi_display->panel->backlight_delta = 1;
 			}
 
-			pr_info("HBM fod on\n");
+			dim_backlight = dsi_display->panel->last_bl_lvl + dsi_display->panel->backlight_delta;
+			pr_info("backlight repeat:%d\n", dim_backlight);
+			rc = dsi_panel_set_backlight(dsi_display->panel, dim_backlight);
+
 			dsi_display->panel->hbm_ntfy_skip_flag = 3;
 			sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-			if (dsi_display->panel->elvss_dimming_check_enable) {
-				rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->hbm_fod_on);
-			} else {
-				rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_FOD_ON]);
-			}
 			if (dsi_display->panel->bl_config.xiaomi_f4_41_flag || dsi_display->panel->bl_config.dcs_type_ss_eb)
 				sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 
@@ -850,7 +751,6 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 			}
 
 			dsi_display->panel->skip_dimmingon = STATE_DIM_BLOCK;
-			dsi_display->panel->fod_dimlayer_hbm_enabled = true;
 			mutex_unlock(&dsi_display->panel->panel_lock);
 			if (rc) {
 				pr_err("failed to send DSI_CMD_HBM_ON cmds, rc=%d\n", rc);
@@ -858,60 +758,7 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 			}
 		}
 	}
-	pr_debug("hbm_overlay:%d fod_dimlayer_hbm_enabled:%d\n", hbm_overlay, dsi_display->panel->fod_dimlayer_hbm_enabled);
 	return rc;
-}
-
-void sde_connector_fod_notify(struct drm_connector *conn)
-{
-	struct sde_connector *c_conn;
-	bool icon, hbm_state;
-	static bool last_icon = false;
-	static bool last_hbm_state = false;
-	struct dsi_display *dsi_display;
-
-	if (!conn) {
-		SDE_ERROR("invalid params\n");
-		return;
-	}
-
-	c_conn = to_sde_connector(conn);
-	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
-		SDE_ERROR("not DRM_MODE_CONNECTOR_DSIl\n");
-		return;
-	}
-
-	dsi_display = (struct dsi_display *) c_conn->display;
-	if (!dsi_display || !dsi_display->panel) {
-		SDE_ERROR("invalid display/panel\n");
-		return;
-	}
-
-	if (dsi_display->panel->hbm_ntfy_skip_flag) {
-		dsi_display->panel->hbm_ntfy_skip_flag--;
-		pr_info("%s: icon notify need skip hbm_ntfy_skip_flag[%d]", __func__, dsi_display->panel->hbm_ntfy_skip_flag);
-		return;
-	}
-
-	icon = c_conn->mi_dimlayer_state.mi_dimlayer_type & MI_DIMLAYER_FOD_ICON;
-	if (last_icon != icon) {
-		if (icon) {
-			sde_crtc_fod_ui_ready(dsi_display, 2, 1);
-		} else {
-			sde_crtc_fod_ui_ready(dsi_display, 2, 0);
-		}
-	}
-	last_icon = icon;
-
-	hbm_state = dsi_display->panel->fod_dimlayer_hbm_enabled;
-	if (last_hbm_state != hbm_state) {
-		if (hbm_state) {
-			sde_crtc_fod_ui_ready(dsi_display, 1, 1);
-		} else {
-			sde_crtc_fod_ui_ready(dsi_display, 1, 0);
-		}
-	}
-	last_hbm_state = hbm_state;
 }
 #endif
 

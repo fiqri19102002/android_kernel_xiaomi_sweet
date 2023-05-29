@@ -284,32 +284,18 @@ struct dsi_panel {
 	bool hbm_enabled;
 	bool thermal_hbm_disabled;
 	u32 hbm_brightness;
-	bool fod_hbm_enabled;
-	bool fod_dimlayer_enabled;
-	bool fod_dimlayer_hbm_enabled;
-	u32 fod_ui_ready;
 	u32 doze_backlight_threshold;
-	u32 fod_off_dimming_delay;
-	ktime_t fod_backlight_off_time;
-	ktime_t fod_hbm_off_time;
 	bool f4_51_ctrl_flag; /* For the f4_36 panel */
 	u32 hbm_ntfy_skip_flag;
 	u32 hbm_off_51_index;
-	u32 fod_off_51_index;
 
 	bool elvss_dimming_check_enable;
 	struct dsi_read_config elvss_dimming_cmds;
 	struct dsi_panel_cmd_set elvss_dimming_offset;
-	struct dsi_panel_cmd_set hbm_fod_on;
-	struct dsi_panel_cmd_set hbm_fod_off;
 
 	u8 panel_read_data[BUF_LEN_MAX];
 	struct dsi_read_config xy_coordinate_cmds;
 
-	bool fod_backlight_flag;
-	bool fod_flag;
-	u32 fod_target_backlight;
-	bool fod_skip_flag; /* optimize to skip nolp command */
 	bool in_aod; /* set  DISPPARAM_DOZE_BRIGHTNESS_HBM/LBM only in AOD */
 	int doze_brightness;
 	bool is_tddi_flag;
