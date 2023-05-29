@@ -7891,19 +7891,6 @@ int dsi_display_enable(struct dsi_display *display)
 		display->panel->panel_initialized = true;
 		pr_debug("cont splash enabled, display enable not required\n");
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-		if (panel->elvss_dimming_check_enable) {
-			rc = dsi_display_write_panel(display, &panel->elvss_dimming_offset);
-			if (rc)
-				return 0;
-
-			rc = dsi_display_read_panel(panel, &panel->elvss_dimming_cmds);
-			if (rc <= 0)
-				return 0;
-
-			pr_info("elvss dimming read result %x\n", panel->elvss_dimming_cmds.rbuf[0]);
-		}
-#endif
 		return 0;
 	}
 

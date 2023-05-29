@@ -2058,8 +2058,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-timing-switch-command",
 	"qcom,mdss-dsi-post-mode-switch-on-command",
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-elvss-dimming-offset-command",
-	"qcom,mdss-dsi-dispparam-elvss-dimming-read-command",
 	"qcom,mdss-dsi-dispparam-warm-command",
 	"qcom,mdss-dsi-dispparam-default-command",
 	"qcom,mdss-dsi-dispparam-cold-command",
@@ -2107,7 +2105,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command",
 	"qcom,mdss-dsi-dispparam-crc-off-command",
-	"qcom,mdss-dsi-dispparam-elvss-dimming-off-command",
 	"qcom,mdss-dsi-read-lockdown-info-command",
 	"qcom,mdss-dsi-dispparam-one-pluse-command",
 	"qcom,mdss-dsi-dispparam-four-pluse-command",
@@ -2152,8 +2149,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-timing-switch-command-state",
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-elvss-dimming-offset-command-state",
-	"qcom,mdss-dsi-dispparam-elvss-dimming-read-command-state",
 	"qcom,mdss-dsi-dispparam-warm-command-state",
 	"qcom,mdss-dsi-dispparam-default-command-state",
 	"qcom,mdss-dsi-dispparam-cold-command-state",
@@ -2201,7 +2196,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command-state",
 	"qcom,mdss-dsi-dispparam-crc-off-command-state",
-	"qcom,mdss-dsi-dispparam-elvss-dimming-off-command-state",
 	"qcom,mdss-dsi-read-lockdown-info-command-state",
 	"qcom,mdss-dsi-dispparam-one-pluse-command-state",
 	"qcom,mdss-dsi-dispparam-four-pluse-command-state",
@@ -3523,77 +3517,6 @@ static void dsi_panel_esd_config_deinit(struct drm_panel_esd_config *esd_config)
 	kfree(esd_config->status_cmd.cmds);
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-int dsi_panel_parse_elvss_dimming_read_configs(struct dsi_panel *panel)
-{
-	int rc = 0;
-	struct dsi_read_config *elvss_dimming_cmds;
-	struct dsi_parser_utils *utils = &panel->utils;
-
-	if (!panel) {
-		pr_err("Invalid Params\n");
-		return -EINVAL;
-	}
-
-	elvss_dimming_cmds = &panel->elvss_dimming_cmds;
-	if (!elvss_dimming_cmds)
-		return -EINVAL;
-
-	dsi_panel_parse_cmd_sets_sub(&panel->elvss_dimming_offset,
-				DSI_CMD_SET_ELVSS_DIMMING_OFFSET, utils);
-	if (!panel->elvss_dimming_offset.count) {
-		pr_err("elvss dimming offset command parsing failed\n");
-		return -EINVAL;
-	}
-
-	dsi_panel_parse_cmd_sets_sub(&elvss_dimming_cmds->read_cmd,
-				DSI_CMD_SET_ELVSS_DIMMING_READ, utils);
-	if (!elvss_dimming_cmds->read_cmd.count) {
-		pr_err("elvss dimming command parsing failed\n");
-		return -EINVAL;
-	}
-
-	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-panel-elvss-dimming-read-length",
-					&(elvss_dimming_cmds->cmds_rlen));
-	if (rc) {
-		pr_err("failed to parse elvss dimming read length, rc=%d\n", rc);
-		return -EINVAL;
-	}
-
-	elvss_dimming_cmds->enabled = true;
-
-	return 0;
-}
-
-static int dsi_panel_parse_elvss_dimming_config(struct dsi_panel *panel)
-{
-	int rc = 0;
-	struct dsi_parser_utils *utils = &panel->utils;
-
-	if (!panel) {
-		pr_err("Invalid Params\n");
-		return -EINVAL;
-	}
-
-	panel->elvss_dimming_check_enable = utils->read_bool(utils->data,
-		"qcom,elvss_dimming_check_enable");
-
-	if (!panel->elvss_dimming_check_enable)
-		return 0;
-
-	rc = dsi_panel_parse_elvss_dimming_read_configs(panel);
-	if (rc) {
-		pr_err("failed to parse esd reg read mode params, rc=%d\n", rc);
-		panel->elvss_dimming_check_enable = false;
-		return -EINVAL;;
-	}
-
-	pr_info("elvss dimming check enable\n");
-
-	return 0;
-}
-#endif
-
 int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel)
 {
 	struct drm_panel_esd_config *esd_config;
@@ -3985,8 +3908,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	} else {
 		pr_info("dc backlight threshold %d \n", panel->dc_threshold);
 	}
-
-	dsi_panel_parse_elvss_dimming_config(panel);
 
 	panel->thermal_hbm_disabled = false;
 	panel->hbm_enabled = false;
@@ -5568,18 +5489,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 
 	temp = param & 0x0F000000;
 	switch (temp) {
-	case DISPPARAM_ELVSS_DIMMING_ON:
-		pr_info("elvss dimming on\n");
-		((u8 *)panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_ELVSS_DIMMING_OFF].cmds[2].msg.tx_buf)[1]
-						= (panel->elvss_dimming_cmds.rbuf[0]);
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ELVSS_DIMMING_OFF);
-		break;
-	case DISPPARAM_ELVSS_DIMMING_OFF:
-		pr_info("elvss dimming off\n");
-		((u8 *)panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_ELVSS_DIMMING_OFF].cmds[2].msg.tx_buf)[1]
-						= (panel->elvss_dimming_cmds.rbuf[0]) & 0x7F;
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ELVSS_DIMMING_OFF);
-		break;
 	case DISPPARAM_FLAT_MODE_ON:
 		pr_info("flat mode on\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_ON);
