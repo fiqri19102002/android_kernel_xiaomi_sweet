@@ -147,8 +147,6 @@ static struct sde_crtc_custom_events custom_events[] = {
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 #define IDLE_TIMEOUT_DEFAULT		200
-
-int dim_layer_alpha;
 #endif
 
 static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
@@ -2193,13 +2191,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 		for (i = 0; i < cstate->num_dim_layers; i++)
 			_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
 					mixer, &cstate->dim_layer[i]);
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-		if (cstate->fingerprint_dim_layer) {
-			_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
-					mixer, cstate->fingerprint_dim_layer);
-		}
-#endif
 	}
 
 	_sde_crtc_program_lm_output_roi(crtc);
@@ -5351,18 +5342,6 @@ static int _sde_crtc_check_secure_state(struct drm_crtc *crtc,
 	SDE_DEBUG("crtc:%d Secure validation successful\n", DRMID(crtc));
 
 	return 0;
-}
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-bool sde_crtc_get_dim_layer_status(struct drm_crtc_state *crtc_state)
-{
-	struct sde_crtc_state *cstate;
-
-	if (!crtc_state)
-		return false;
-
-	cstate = to_sde_crtc_state(crtc_state);
-	return !!cstate->dim_layer_status;
 }
 
 static int sde_crtc_atomic_check(struct drm_crtc *crtc,

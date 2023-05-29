@@ -455,7 +455,6 @@ static DEVICE_ATTR_RW(thermal_hbm_disabled);
 static DEVICE_ATTR_RO(panel_info);
 static DEVICE_ATTR_RW(disp_param);
 static DEVICE_ATTR_RO(doze_brightness);
-static DEVICE_ATTR_RW(dim_layer_enable);
 static DEVICE_ATTR_RW(doze_backlight);
 static DEVICE_ATTR_RO(smart_fps_value);
 static DEVICE_ATTR_RO(dynamic_fps);
@@ -472,9 +471,7 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_panel_info.attr,
 	&dev_attr_disp_param.attr,
 	&dev_attr_doze_brightness.attr,
-	&dev_attr_dim_layer_enable.attr,
 	&dev_attr_doze_backlight.attr,
-	&dev_attr_dim_alpha.attr,
 	&dev_attr_smart_fps_value.attr,
 	&dev_attr_dynamic_fps.attr,
 	&dev_attr_mipi_reg.attr,

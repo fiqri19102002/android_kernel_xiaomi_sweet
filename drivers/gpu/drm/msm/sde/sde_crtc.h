@@ -440,12 +440,6 @@ struct sde_crtc_state {
 	u32 padding_active;
 	u32 padding_dummy;
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	bool finger_down;
-	bool dim_layer_status;
-	struct sde_hw_dim_layer *fingerprint_dim_layer;
-#endif
-
 	struct sde_crtc_respool rp;
 };
 
