@@ -2711,12 +2711,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 	panel->bl_config.dcs_type_ss_eb = utils->read_bool(utils->data,
 								"qcom,mdss-dsi-bl-dcs-type-ss-eb");
-
-	panel->bl_config.xiaomi_f4_36_flag = utils->read_bool(utils->data,
-								"qcom,mdss-dsi-bl-xiaomi-f4-36-flag");
-
-	panel->bl_config.xiaomi_f4_41_flag = utils->read_bool(utils->data,
-								"qcom,mdss-dsi-bl-xiaomi-f4-41-flag");
 #endif
 
 	data = utils->get_property(utils->data, "qcom,bl-update-flag", NULL);
@@ -4890,8 +4884,7 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	if (!panel->oled_panel_video_mode)
 		panel->in_aod = false;
 
-	if (!panel->oled_panel_video_mode && (panel->bl_config.dcs_type_ss_eb || 
-		panel->bl_config.xiaomi_f4_36_flag ||panel->bl_config.xiaomi_f4_41_flag)) {
+	if (!panel->oled_panel_video_mode && (panel->bl_config.dcs_type_ss_eb)) {
 		rc = dsi_panel_set_backlight(panel, panel->last_bl_lvl);
 	}
 #else
@@ -5371,28 +5364,10 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_DC_ON:
 		pr_info("DC on\n");
 		panel->dc_enable = true;
-		if ((panel->bl_config.xiaomi_f4_41_flag) ||
-			panel->bl_config.xiaomi_f4_36_flag) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
-			if (rc)
-				pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
-						panel->name, rc);
-			else
-				rc = dsi_panel_update_backlight(panel, panel->last_bl_lvl);
-		}
 		break;
 	case DISPPARAM_DC_OFF:
 		pr_info("DC off\n");
 		panel->dc_enable = false;
-		if ((panel->bl_config.xiaomi_f4_41_flag) ||
-			panel->bl_config.xiaomi_f4_36_flag) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_OFF);
-			if (rc)
-				pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_OFF cmd, rc=%d\n",
-						panel->name, rc);
-			else
-				rc = dsi_panel_update_backlight(panel, panel->last_bl_lvl);
-		}
 		break;
 	case DISPPARAM_BC_120HZ:
 		pr_info("BC 120hz\n");
@@ -5842,20 +5817,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_BC_120HZ cmd, rc=%d\n",
-					panel->name, rc);
-	}
-
-	if (panel->bl_config.xiaomi_f4_41_flag && panel->dc_enable) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
-					panel->name, rc);
-	}
-
-	if (panel->bl_config.xiaomi_f4_36_flag && panel->dc_enable) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
 					panel->name, rc);
 	}
 

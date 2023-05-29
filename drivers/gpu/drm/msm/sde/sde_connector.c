@@ -735,7 +735,7 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 
 			dsi_display->panel->hbm_ntfy_skip_flag = 3;
 			sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-			if (dsi_display->panel->bl_config.xiaomi_f4_41_flag || dsi_display->panel->bl_config.dcs_type_ss_eb)
+			if (dsi_display->panel->bl_config.dcs_type_ss_eb)
 				sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 
 			if (dsi_display->panel->bl_config.dcs_type_ss_eb)
@@ -744,7 +744,7 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 			if (dsi_display->drm_dev && ((dsi_display->drm_dev->doze_state == DRM_BLANK_LP1) ||
 				(dsi_display->drm_dev->doze_state == DRM_BLANK_LP2))) {
 				pr_info("aod to HBM\n");
-				if (dsi_display->panel->f4_51_ctrl_flag || dsi_display->panel->bl_config.xiaomi_f4_41_flag) {
+				if (dsi_display->panel->f4_51_ctrl_flag) {
 					sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_TX_COMPLETE);
 					dsi_display->panel->hbm_ntfy_skip_flag = 4;
 				}
