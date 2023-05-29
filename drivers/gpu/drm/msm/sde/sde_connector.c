@@ -1947,7 +1947,6 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 static irqreturn_t esd_err_irq_handle(int irq, void *data)
 {
 	struct sde_connector *c_conn = data;
-	struct dsi_display *dsi_display = (struct dsi_display *)(c_conn->display);
 	struct drm_event event;
 	bool panel_on = false;
 	char err_irq_gpio_value = 1;
@@ -1968,7 +1967,6 @@ static irqreturn_t esd_err_irq_handle(int irq, void *data)
 	if (panel_on && (c_conn->panel_dead == false) && err_irq_gpio_value == 0) {
 		SDE_DEFERRED_ERROR("esd check irq report PANEL_DEAD conn_id: %d enc_id: %d, panel_status[%d]\n",
 		c_conn->base.base.id, c_conn->encoder->base.id, panel_on);
-		dsi_display->panel->panel_dead_flag = true;
 		c_conn->panel_dead = true;
 		event.type = DRM_EVENT_PANEL_DEAD;
 		event.length = sizeof(bool);

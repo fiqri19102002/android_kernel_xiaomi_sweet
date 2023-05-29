@@ -40,7 +40,6 @@
 #endif
 
 #include <linux/export.h>
-#include <linux/double_click.h>
 #include "xiaomi_frame_stat.h"
 #endif
 
@@ -475,21 +474,7 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (panel->is_tddi_flag) {
-		if (!is_tp_doubleclick_enable() || panel->panel_dead_flag) {
-			rc = dsi_pwr_enable_regulator(&panel->power_info, true);
-			if (panel->panel_dead_flag)
-				panel->panel_dead_flag = false;
-		}
-	} else {
-		rc = dsi_pwr_enable_regulator(&panel->power_info, true);
-	}
-
-	mdelay(12);
-#else
 	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
-#endif
 	if (rc) {
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
 		goto exit;
@@ -538,20 +523,8 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (panel->is_tddi_flag) {
-		if (!is_tp_doubleclick_enable() || panel->panel_dead_flag) {
-			if (gpio_is_valid(panel->reset_config.reset_gpio))
-				gpio_set_value(panel->reset_config.reset_gpio, 0);
-		}
-	} else {
-		if (gpio_is_valid(panel->reset_config.reset_gpio))
-			gpio_set_value(panel->reset_config.reset_gpio, 0);
-	}
-#else
 	if (gpio_is_valid(panel->reset_config.reset_gpio))
 		gpio_set_value(panel->reset_config.reset_gpio, 0);
-#endif
 
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
@@ -561,25 +534,9 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 		pr_err("[%s] failed set pinctrl state, rc=%d\n", panel->name,
 		       rc);
 	}
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	mdelay(20);
-
-	if (panel->is_tddi_flag) {
-		if (!is_tp_doubleclick_enable() || panel->panel_dead_flag) {
-			rc = dsi_pwr_enable_regulator(&panel->power_info, false);
-			if (rc)
-				pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
-		}
-	} else {
-		rc = dsi_pwr_enable_regulator(&panel->power_info, false);
-		if (rc)
-			pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
-	}
-#else
 	rc = dsi_pwr_enable_regulator(&panel->power_info, false);
 	if (rc)
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
-#endif
 
 	return rc;
 }
@@ -3797,7 +3754,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 		pr_info("doze backlight threshold %d \n", panel->doze_backlight_threshold);
 	}
 
-	panel->is_tddi_flag = utils->read_bool(of_node, "qcom,is-tddi-flag");
 	panel->f4_51_ctrl_flag = utils->read_bool(utils->data, "qcom,dispparam-f4-51-ctrl-flag");
 
 	if (panel->f4_51_ctrl_flag) {
