@@ -928,7 +928,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		} else {
 			rc = dsi_panel_update_backlight(panel, bl_lvl);
 		}
-	}
 #else
 		rc = dsi_panel_update_backlight(panel, bl_lvl);
 #endif
@@ -4766,11 +4765,6 @@ exit:
 int dsi_panel_set_nolp(struct dsi_panel *panel)
 {
 	int rc = 0;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct dsi_cmd_desc *cmds = NULL;
-	struct dsi_display_mode_priv_info *priv_info = panel->cur_mode->priv_info;
-	u8 *tx_buf;
-#endif
 
 	if (!panel) {
 		pr_err("invalid params\n");
@@ -5051,7 +5045,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	int rc = 0;
 	uint32_t temp = 0;
 	bool is_thermal_call = false;
-	struct dsi_panel_cmd_set cmd_sets = {0};
 	struct dsi_cmd_desc *cmds = NULL;
 	struct dsi_display_mode_priv_info *priv_info;
 	u32 count;
