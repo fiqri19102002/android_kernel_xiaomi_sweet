@@ -2765,9 +2765,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	panel->bl_config.bl_remap_flag = utils->read_bool(utils->data,
 								"qcom,mdss-brightness-remap");
-
-	panel->bl_config.samsung_prepare_hbm_flag = utils->read_bool(utils->data,
-									"qcom,samsung-prepare-hbm");
 #endif
 
 	if (panel->bl_config.type == DSI_BACKLIGHT_PWM) {
@@ -5371,27 +5368,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_DOZE_OFF:
 		pr_info("doze Off\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
-		break;
-	case DISPPARAM_HBM_BACKLIGHT_RESEND:
-		if (panel->bl_config.samsung_prepare_hbm_flag) {
-			u32 dim_backlight;
-
-			if (panel->last_bl_lvl >= panel->bl_config.bl_max_level - 1) {
-				if (panel->backlight_delta == -1)
-					panel->backlight_delta = -2;
-				else
-					panel->backlight_delta = -1;
-			} else {
-				if (panel->backlight_delta == 1)
-					panel->backlight_delta = 2;
-				else
-					panel->backlight_delta = 1;
-			}
-
-			dim_backlight = panel->last_bl_lvl + panel->backlight_delta;
-			pr_info("backlight repeat:%d\n", dim_backlight);
-			rc = dsi_panel_update_backlight(panel, dim_backlight);
-		}
 		break;
 	case DISPPARAM_CRC_OFF:
 		pr_info("crc off\n");

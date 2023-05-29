@@ -683,7 +683,6 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 	struct dsi_display *dsi_display;
 	struct sde_connector_state *c_state;
 	int rc = 0;
-	static bool hbm_overlay;
 	u32 dim_backlight;
 	struct dsi_cmd_desc *hbm_cmds = NULL;
 
@@ -712,52 +711,6 @@ int sde_connector_update_hbm(struct sde_connector *c_conn)
 		return rc;
 	}
 
-	if (!hbm_overlay) {
-		mutex_lock(&dsi_display->panel->panel_lock);
-		if (dsi_display->panel->bl_config.samsung_prepare_hbm_flag) {
-			rc = dsi_display_write_panel(dsi_display, &dsi_display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_DIMMINGON]);
-
-			if (dsi_display->panel->last_bl_lvl >= dsi_display->panel->bl_config.bl_max_level - 1) {
-				if (dsi_display->panel->backlight_delta == -1)
-					dsi_display->panel->backlight_delta = -2;
-				else
-					dsi_display->panel->backlight_delta = -1;
-			} else {
-				if (dsi_display->panel->backlight_delta == 1)
-					dsi_display->panel->backlight_delta = 2;
-				else
-					dsi_display->panel->backlight_delta = 1;
-			}
-
-			dim_backlight = dsi_display->panel->last_bl_lvl + dsi_display->panel->backlight_delta;
-			pr_info("backlight repeat:%d\n", dim_backlight);
-			rc = dsi_panel_set_backlight(dsi_display->panel, dim_backlight);
-
-			dsi_display->panel->hbm_ntfy_skip_flag = 3;
-			sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-			if (dsi_display->panel->bl_config.dcs_type_ss_eb)
-				sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-
-			if (dsi_display->panel->bl_config.dcs_type_ss_eb)
-				sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
-
-			if (dsi_display->drm_dev && ((dsi_display->drm_dev->doze_state == DRM_BLANK_LP1) ||
-				(dsi_display->drm_dev->doze_state == DRM_BLANK_LP2))) {
-				pr_info("aod to HBM\n");
-				if (dsi_display->panel->f4_51_ctrl_flag) {
-					sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_TX_COMPLETE);
-					dsi_display->panel->hbm_ntfy_skip_flag = 4;
-				}
-			}
-
-			dsi_display->panel->skip_dimmingon = STATE_DIM_BLOCK;
-			mutex_unlock(&dsi_display->panel->panel_lock);
-			if (rc) {
-				pr_err("failed to send DSI_CMD_HBM_ON cmds, rc=%d\n", rc);
-				return rc;
-			}
-		}
-	}
 	return rc;
 }
 #endif

@@ -137,7 +137,6 @@ struct dsi_backlight_config {
 	int en_gpio;
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	bool bl_remap_flag;
-	bool samsung_prepare_hbm_flag;
 #endif
 	/* PWM params */
 	struct pwm_device *pwm_bl;
