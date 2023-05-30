@@ -284,7 +284,6 @@ struct dsi_panel {
 	int doze_brightness;
 	bool panel_max_frame_rate;
 
-	bool oled_panel_video_mode;
 	int doze_lbm_brightness;
 	int doze_hbm_brightness;
 #endif

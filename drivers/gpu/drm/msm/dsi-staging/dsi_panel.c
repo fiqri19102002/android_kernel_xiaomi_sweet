@@ -778,20 +778,19 @@ int dsi_panel_set_doze_backlight(struct dsi_display *display)
 	pr_info("doze_state = %d, doze_brightness = %d\n", drm_dev->doze_state, drm_dev->doze_brightness);
 
 	if (drm_dev->doze_brightness == DOZE_BRIGHTNESS_TO_NORMAL) {
-		if (panel->oled_panel_video_mode) {
-			if ((last_aod_hbm_status == DOZE_BRIGHTNESS_LBM && panel->last_bl_lvl <= panel->doze_lbm_brightness) ||
-				(last_aod_hbm_status == DOZE_BRIGHTNESS_HBM && panel->last_bl_lvl <= panel->doze_hbm_brightness))
-				schedule_delayed_work(&panel->nolp_bl_delay_work, msecs_to_jiffies(0));
-			else
-				schedule_delayed_work(&panel->nolp_bl_delay_work, msecs_to_jiffies(30));
-		}
+		if ((last_aod_hbm_status == DOZE_BRIGHTNESS_LBM && panel->last_bl_lvl <= panel->doze_lbm_brightness) ||
+			(last_aod_hbm_status == DOZE_BRIGHTNESS_HBM && panel->last_bl_lvl <= panel->doze_hbm_brightness))
+			schedule_delayed_work(&panel->nolp_bl_delay_work, msecs_to_jiffies(0));
+		else
+			schedule_delayed_work(&panel->nolp_bl_delay_work, msecs_to_jiffies(30));
+
 		drm_dev->doze_brightness = DOZE_BRIGHTNESS_INVALID;
 	}
 
 	if (drm_dev->doze_brightness == DOZE_BRIGHTNESS_LBM || drm_dev->doze_brightness == DOZE_BRIGHTNESS_HBM)
 		last_aod_hbm_status  = drm_dev->doze_brightness;
 
-	if (drm_dev && ((panel->oled_panel_video_mode && drm_dev->doze_state == DRM_BLANK_UNBLANK) ||
+	if (drm_dev && ((drm_dev->doze_state == DRM_BLANK_UNBLANK) ||
 		drm_dev->doze_state == DRM_BLANK_LP1 || drm_dev->doze_state == DRM_BLANK_LP2)) {
 		if (drm_dev->doze_brightness == DOZE_BRIGHTNESS_HBM) {
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_HBM);
@@ -923,8 +922,8 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		break;
 	case DSI_BACKLIGHT_DCS:
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-		if (panel->oled_panel_video_mode && panel->in_aod && panel->doze_brightness != DOZE_BRIGHTNESS_INVALID) {
-			pr_info("oled panel video mode need skip set backlight: %d, or set it later", bl_lvl);
+		if (panel->in_aod && panel->doze_brightness != DOZE_BRIGHTNESS_INVALID) {
+			pr_info("skip set backlight: %d, or set it later", bl_lvl);
 		} else {
 			rc = dsi_panel_update_backlight(panel, bl_lvl);
 		}
@@ -3782,14 +3781,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 		pr_info("hbm brightness %d \n", panel->hbm_brightness);
 	}
 
-	panel->oled_panel_video_mode = utils->read_bool(of_node,
-			"qcom,mdss-dsi-oled-panel-video-mode");
-	if (panel->oled_panel_video_mode) {
-		pr_info("oled panel video mode enabled.\n");
-	} else {
-		pr_info("oled panel video mode disabled..\n");
-	}
-
 	rc = of_property_read_u32(of_node,
 		"mi,mdss-dsi-doze-hbm-brightness-value", &panel->doze_hbm_brightness);
 	if (rc || panel->doze_hbm_brightness <= 0) {
@@ -4781,30 +4772,11 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
 			"ibb", REGULATOR_MODE_NORMAL);
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (!panel->oled_panel_video_mode) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
-			       panel->name, rc);
-
-		panel->skip_dimmingon = STATE_NONE;
-	} else
-		pr_info("%s skip\n", __func__);
-
-	if (!panel->oled_panel_video_mode)
-		panel->in_aod = false;
-
-	if (!panel->oled_panel_video_mode && panel->bl_config.dcs_type_ss_eb) {
-		rc = dsi_panel_set_backlight(panel, panel->last_bl_lvl);
-	}
-#else
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 	if (rc)
 		pr_err("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 		       panel->name, rc);
 exit:
-#endif
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
