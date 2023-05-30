@@ -1981,9 +1981,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,cmd-to-video-mode-post-switch-commands",
 	"qcom,video-to-cmd-mode-switch-commands",
 	"qcom,video-to-cmd-mode-post-switch-commands",
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-panel-status-offset-command",
-#endif
 	"qcom,mdss-dsi-panel-status-command",
 	"qcom,mdss-dsi-lp1-command",
 	"qcom,mdss-dsi-lp2-command",
@@ -1996,60 +1993,15 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"ROI not parsed from DTSI, generated dynamically",
 	"qcom,mdss-dsi-timing-switch-command",
 	"qcom,mdss-dsi-post-mode-switch-on-command",
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-warm-command",
-	"qcom,mdss-dsi-dispparam-default-command",
-	"qcom,mdss-dsi-dispparam-cold-command",
-	"qcom,mdss-dsi-dispparam-papermode-command",
-	"qcom,mdss-dsi-dispparam-papermode1-command",
-	"qcom,mdss-dsi-dispparam-papermode2-command",
-	"qcom,mdss-dsi-dispparam-papermode3-command",
-	"qcom,mdss-dsi-dispparam-papermode4-command",
-	"qcom,mdss-dsi-dispparam-papermode5-command",
-	"qcom,mdss-dsi-dispparam-papermode6-command",
-	"qcom,mdss-dsi-dispparam-papermode7-command",
-	"qcom,mdss-dsi-dispparam-normal1-command",
-	"qcom,mdss-dsi-dispparam-normal2-command",
-	"qcom,mdss-dsi-dispparam-srgb-command",
-	"qcom,mdss-dsi-dispparam-ceon-command",
-	"qcom,mdss-dsi-dispparam-ceoff-command",
-	"qcom,mdss-dsi-dispparam-cabcuion-command",
-	"qcom,mdss-dsi-dispparam-cabcstillon-command",
-	"qcom,mdss-dsi-dispparam-cabcmovieon-command",
-	"qcom,mdss-dsi-dispparam-cabcoff-command",
-	"qcom,mdss-dsi-dispparam-skince-cabcuion-command",
-	"qcom,mdss-dsi-dispparam-skince-cabcstillon-command",
-	"qcom,mdss-dsi-dispparam-skince-cabcmovieon-command",
-	"qcom,mdss-dsi-dispparam-skince-cabcoff-command",
-	"qcom,mdss-dsi-dispparam-dimmingon-command",
-	"qcom,mdss-dsi-dispparam-dimmingoff-command",
-	"qcom,mdss-dsi-dispparam-acl-off-command",
-	"qcom,mdss-dsi-dispparam-acl-l1-command",
-	"qcom,mdss-dsi-dispparam-acl-l2-command",
-	"qcom,mdss-dsi-dispparam-acl-l3-command",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-l1-on-command",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-l2-on-command",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-off-command",
-	"qcom,mdss-dsi-dispparam-hbm-on-command",
-	"qcom,mdss-dsi-dispparam-hbm-off-command",
-	"qcom,mdss-dsi-displayoff-command",
-	"qcom,mdss-dsi-displayon-command",
-	"qcom,mdss-dsi-read-brightness-command",
-	"qcom,mdss-dsi-dispparam-max-luminance-command",
-	"qcom,mdss-dsi-dispparam-max-luminance-valid-command",
-#endif
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command",
-	"qcom,mdss-dsi-dispparam-crc-off-command",
-	"qcom,mdss-dsi-read-lockdown-info-command",
-	"qcom,mdss-dsi-dispparam-one-pluse-command",
-	"qcom,mdss-dsi-dispparam-four-pluse-command",
+	"qcom,mdss-dsi-dispparam-dimmingon-command",
+	"qcom,mdss-dsi-dispparam-dimmingoff-command",
+	"qcom,mdss-dsi-dispparam-hbm-on-command",
+	"qcom,mdss-dsi-dispparam-hbm-off-command",
 	"qcom,mdss-dsi-dispparam-flat-mode-on-command",
 	"qcom,mdss-dsi-dispparam-flat-mode-off-command",
-	"qcom,mdss-dsi-dispparam-dc-on-command",
-	"qcom,mdss-dsi-dispparam-dc-off-command",
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command",
 	"qcom,mdss-dsi-dispparam-120hz-dc-crc-setting-command",
 	"qcom,mdss-dsi-dispparam-bc-120hz-command",
@@ -2069,9 +2021,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-res-switch-state",
 	"qcom,cmd-to-video-mode-switch-commands-state",
 	"qcom,cmd-to-video-mode-post-switch-commands-state",
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-panel-status-offset-command-state",
-#endif
 	"qcom,video-to-cmd-mode-switch-commands-state",
 	"qcom,video-to-cmd-mode-post-switch-commands-state",
 	"qcom,mdss-dsi-panel-status-command-state",
@@ -2086,60 +2035,15 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"ROI not parsed from DTSI, generated dynamically",
 	"qcom,mdss-dsi-timing-switch-command-state",
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-warm-command-state",
-	"qcom,mdss-dsi-dispparam-default-command-state",
-	"qcom,mdss-dsi-dispparam-cold-command-state",
-	"qcom,mdss-dsi-dispparam-papermode-command-state",
-	"qcom,mdss-dsi-dispparam-papermode1-command-state",
-	"qcom,mdss-dsi-dispparam-papermode2-command-state",
-	"qcom,mdss-dsi-dispparam-papermode3-command-state",
-	"qcom,mdss-dsi-dispparam-papermode4-command-state",
-	"qcom,mdss-dsi-dispparam-papermode5-command-state",
-	"qcom,mdss-dsi-dispparam-papermode6-command-state",
-	"qcom,mdss-dsi-dispparam-papermode7-command-state",
-	"qcom,mdss-dsi-dispparam-normal1-command-state",
-	"qcom,mdss-dsi-dispparam-normal2-command-state",
-	"qcom,mdss-dsi-dispparam-srgb-command-state",
-	"qcom,mdss-dsi-dispparam-ceon-command-state",
-	"qcom,mdss-dsi-dispparam-ceoff-command-state",
-	"qcom,mdss-dsi-dispparam-cabcuion-command-state",
-	"qcom,mdss-dsi-dispparam-cabcstillon-command-state",
-	"qcom,mdss-dsi-dispparam-cabcmovieon-command-state",
-	"qcom,mdss-dsi-dispparam-cabcoff-command-state",
-	"qcom,mdss-dsi-dispparam-skince-cabcuion-command-state",
-	"qcom,mdss-dsi-dispparam-skince-cabcstillon-command-state",
-	"qcom,mdss-dsi-dispparam-skince-cabcmovieon-command-state",
-	"qcom,mdss-dsi-dispparam-skince-cabcoff-command-state",
-	"qcom,mdss-dsi-dispparam-dimmingon-command-state",
-	"qcom,mdss-dsi-dispparam-dimmingoff-command-state",
-	"qcom,mdss-dsi-dispparam-acl-off-command-state",
-	"qcom,mdss-dsi-dispparam-acl-l1-command-state",
-	"qcom,mdss-dsi-dispparam-acl-l2-command-state",
-	"qcom,mdss-dsi-dispparam-acl-l3-command-state",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-l1-on-command-state",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-l2-on-command-state",
-	"qcom,mdss-dsi-dispparam-lcd-hbm-off-command-state",
-	"qcom,mdss-dsi-dispparam-hbm-on-command-state",
-	"qcom,mdss-dsi-dispparam-hbm-off-command-state",
-	"qcom,mdss-dsi-displayoff-command-state",
-	"qcom,mdss-dsi-displayon-command-state",
-	"qcom,mdss-dsi-read-brightness-command-state",
-	"qcom,mdss-dsi-dispparam-max-luminance-command-state",
-	"qcom,mdss-dsi-dispparam-max-luminance-valid-command-state",
-#endif
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	"qcom,mdss-dsi-dispparam-crc-dcip3-on-command-state",
-	"qcom,mdss-dsi-dispparam-crc-off-command-state",
-	"qcom,mdss-dsi-read-lockdown-info-command-state",
-	"qcom,mdss-dsi-dispparam-one-pluse-command-state",
-	"qcom,mdss-dsi-dispparam-four-pluse-command-state",
+	"qcom,mdss-dsi-dispparam-dimmingon-command-state",
+	"qcom,mdss-dsi-dispparam-dimmingoff-command-state",
+	"qcom,mdss-dsi-dispparam-hbm-on-command-state",
+	"qcom,mdss-dsi-dispparam-hbm-off-command-state",
 	"qcom,mdss-dsi-dispparam-flat-mode-on-command-state",
 	"qcom,mdss-dsi-dispparam-flat-mode-off-command-state",
-	"qcom,mdss-dsi-dispparam-dc-on-command-state",
-	"qcom,mdss-dsi-dispparam-dc-off-command-state",
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command-state",
 	"qcom,mdss-dsi-dispparam-120hz-dc-crc-setting-command-state",
 	"qcom,mdss-dsi-dispparam-bc-120hz-command-state",
@@ -3439,9 +3343,6 @@ static void dsi_panel_esd_config_deinit(struct drm_panel_esd_config *esd_config)
 	kfree(esd_config->status_value);
 	kfree(esd_config->status_valid_params);
 	kfree(esd_config->status_cmds_rlen);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	kfree(esd_config->offset_cmd.cmds);
-#endif
 	kfree(esd_config->status_cmd.cmds);
 }
 
@@ -3462,14 +3363,6 @@ int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel)
 	esd_config = &panel->esd_config;
 	if (!esd_config)
 		return -EINVAL;
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	dsi_panel_parse_cmd_sets_sub(&esd_config->offset_cmd,
-				DSI_CMD_SET_PANEL_STATUS_OFFSET, utils);
-	if (!esd_config->offset_cmd.count) {
-		pr_err("no panel status offset command\n");
-	}
-#endif
 
 	dsi_panel_parse_cmd_sets_sub(&esd_config->status_cmd,
 				DSI_CMD_SET_PANEL_STATUS, utils);
@@ -3570,10 +3463,6 @@ error2:
 error1:
 	kfree(esd_config->status_cmd.cmds);
 error:
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (esd_config->offset_cmd.count > 0)
-		kfree(esd_config->offset_cmd.cmds);
-#endif
 	return rc;
 }
 
@@ -4736,47 +4625,47 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_WARM:
 		pr_info("warm\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_WARM);
+		/* no-op */
 		break;
 	case DISPPARAM_DEFAULT:
 		pr_info("normal\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEFAULT);
+		/* no-op */
 		break;
 	case DISPPARAM_COLD:
 		pr_info("cold\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_COLD);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE8:
 		pr_info("paper mode\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_COLD);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE1:
 		pr_info("paper mode 1\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER1);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE2:
 		pr_info("paper mode 2\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER2);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE3:
 		pr_info("paper mode 3\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER3);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE4:
 		pr_info("paper mode 4\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER4);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE5:
 		pr_info("paper mode 5\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER5);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE6:
 		pr_info("paper mode 6\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER6);
+		/* no-op */
 		break;
 	case DISPPARAM_PAPERMODE7:
 		pr_info("paper mode 7\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PAPER7);
+		/* no-op */
 		break;
 	default:
 		break;
@@ -4786,11 +4675,11 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_CE_ON:
 		pr_info("ceon\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CEON);
+		/* no-op */
 		break;
 	case DISPPARAM_CE_OFF:
 		pr_info("ceoff\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CEOFF);
+		/* no-op */
 		break;
 	default:
 		break;
@@ -4800,35 +4689,35 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_CABCUI_ON:
 		pr_info("cabcuion\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CABCUION);
+		/* no-op */
 		break;
 	case DISPPARAM_CABCSTILL_ON:
 		pr_info("cabcstillon\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CABCSTILLON);
+		/* no-op */
 		break;
 	case DISPPARAM_CABCMOVIE_ON:
 		pr_info("cabcmovieon\n");
-		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CABCMOVIEON);
+		/* no-op */
 		break;
 	case DISPPARAM_CABC_OFF:
 		pr_info("cabcoff\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CABCOFF);
+		/* no-op */
 		break;
 	case DISPPARAM_SKIN_CE_CABCUI_ON:
 		pr_info("skince cabcuion\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_SKINCE_CABCUION);
+		/* no-op */
 		break;
 	case DISPPARAM_SKIN_CE_CABCSTILL_ON:
 		pr_info("skince cabcstillon\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_SKINCE_CABCSTILLON);
+		/* no-op */
 		break;
 	case DISPPARAM_SKIN_CE_CABCMOVIE_ON:
 		pr_info("skince cabcmovieon\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_SKINCE_CABCMOVIEON);
+		/* no-op */
 		break;
 	case DISPPARAM_SKIN_CE_CABC_OFF:
 		pr_info("skince cabcoff\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_SKINCE_CABCOFF);
+		/* no-op */
 		break;
 	case DISPPARAM_DIMMING_OFF:
 		pr_info("dimmingoff\n");
@@ -4850,19 +4739,19 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_ACL_L1:
 		pr_info("acl level 1\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ACL_L1);
+		/* no-op */
 		break;
 	case DISPPARAM_ACL_L2:
 		pr_info("acl level 2\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ACL_L2);
+		/* no-op */
 		break;
 	case DISPPARAM_ACL_L3:
 		pr_info("acl level 3\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ACL_L3);
+		/* no-op */
 		break;
 	case DISPPARAM_ACL_OFF:
 		pr_info("acl off\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ACL_OFF);
+		/* no-op */
 		break;
 	default:
 		break;
@@ -4872,15 +4761,15 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_LCD_HBM_L1_ON:
 		pr_info("lcd hbm l1 on\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_LCD_HBM_L1_ON);
+		/* no-op */
 		break;
 	case DISPPARAM_LCD_HBM_L2_ON:
 		pr_info("lcd hbm  l2 on\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_LCD_HBM_L2_ON);
+		/* no-op */
 		break;
 	case DISPPARAM_LCD_HBM_OFF:
 		pr_info("lcd hbm off\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_LCD_HBM_OFF);
+		/* no-op */
 		break;
 	case DISPPARAM_HBM_ON:
 		if (param & DISPPARAM_THERMAL_SET)
@@ -4951,15 +4840,15 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_NORMALMODE1:
 		pr_info("normal mode1\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_NORMAL1);
+		/* no-op */
 		break;
 	case DISPPARAM_P3:
 		pr_info("dci p3 mode\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CRC_DCIP3);
+		/* no-op */
 		break;
 	case DISPPARAM_SRGB:
 		pr_info("sRGB\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_SRGB);
+		/* no-op */
 		break;
 	case DISPPARAM_DOZE_BRIGHTNESS_HBM:
 		if (panel->in_aod) {
@@ -4977,11 +4866,11 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_DOZE_OFF:
 		pr_info("doze Off\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
+		/* no-op */
 		break;
 	case DISPPARAM_CRC_OFF:
 		pr_info("crc off\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_CRC_OFF);
+		/* no-op */
 		break;
 	default:
 		break;
@@ -5007,11 +4896,11 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_ONE_PLUSE:
 		pr_info("ONE PLUSE\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_ONE_PLUSE);
+		/* no-op */
 		break;
 	case DISPPARAM_FOUR_PLUSE:
 		pr_info("FOUR PLUSE\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FOUR_PLUSE);
+		/* no-op */
 		break;
 	default:
 		break;

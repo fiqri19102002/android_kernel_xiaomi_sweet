@@ -896,9 +896,6 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 					bool te_check_override)
 {
 	struct dsi_display *dsi_display = display;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct drm_panel_esd_config *config;
-#endif
 	struct dsi_panel *panel;
 	u32 status_mode;
 	int rc = 0x1;
@@ -938,16 +935,6 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 		rc = dsi_display_status_check_te(dsi_display);
 		goto exit;
 	}
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (status_mode == ESD_MODE_REG_READ) {
-		config = &(panel->esd_config);
-		if (config->offset_cmd.count != 0) {
-			rc = dsi_display_write_panel(dsi_display, &config->offset_cmd);
-			pr_debug("%s: read reg offset command rc = %d\n",__func__, rc);
-		}
-	}
-#endif
 
 	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 			     DSI_ALL_CLKS, DSI_CLK_ON);
