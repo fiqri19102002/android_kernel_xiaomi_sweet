@@ -640,9 +640,6 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	u32 bl_temp = 0;
-#endif
 	struct mipi_dsi_device *dsi;
 
 	if (!panel || (bl_lvl > 0xffff)) {
@@ -650,38 +647,21 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		return -EINVAL;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (panel->bl_config.bl_remap_flag && 
-		panel->bl_config.brightness_max_level && panel->bl_config.bl_max_level) {
-		/*
-		 * map UI brightness into driver backlight level
-		 * y = kx+b;
-		 */
-		bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level) * bl_lvl / panel->bl_config.brightness_max_level + panel->bl_config.bl_min_level;
-		pr_debug("bl_temp %d\n", bl_temp);
-	} else
-		bl_temp = bl_lvl;
-
-	pr_debug("bl_temp %d\n", bl_temp);
-#endif
 	dsi = &panel->mipi_device;
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (panel->bl_config.dcs_type_ss_ea || panel->bl_config.dcs_type_ss_eb)
+	if (panel->bl_config.dcs_type_ss_ea)
 		rc = mipi_dsi_dcs_set_display_brightness_ss(dsi, bl_lvl);
 	else
 		rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
-
-	if (rc < 0)
-		pr_err("failed to update dcs backlight:%d\n", bl_temp);
 #else
 	rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
+#endif
 	if (rc < 0)
 		pr_err("failed to update dcs backlight:%d\n", bl_lvl);
-#endif
 
 	return rc;
 }
@@ -2534,9 +2514,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	panel->bl_config.dcs_type_ss_ea = utils->read_bool(utils->data,
 								"qcom,mdss-dsi-bl-dcs-type-ss-ea");
-
-	panel->bl_config.dcs_type_ss_eb = utils->read_bool(utils->data,
-								"qcom,mdss-dsi-bl-dcs-type-ss-eb");
 #endif
 
 	data = utils->get_property(utils->data, "qcom,bl-update-flag", NULL);
@@ -2593,11 +2570,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 	panel->bl_config.bl_inverted_dbv = utils->read_bool(utils->data,
 		"qcom,mdss-dsi-bl-inverted-dbv");
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	panel->bl_config.bl_remap_flag = utils->read_bool(utils->data,
-								"qcom,mdss-brightness-remap");
-#endif
 
 	if (panel->bl_config.type == DSI_BACKLIGHT_PWM) {
 		rc = dsi_panel_parse_bl_pwm_config(panel);
