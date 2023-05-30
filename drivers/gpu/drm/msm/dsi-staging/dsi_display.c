@@ -7030,16 +7030,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 		}
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	pr_info("mdp_transfer_time_us=%d us\n", adj_mode.priv_info->mdp_transfer_time_us);
-	pr_info("hactive= %d,vactive= %d,fps=%d\n", timing.h_active, timing.v_active, timing.refresh_rate);
-
-	if (display->panel->cur_mode->timing.refresh_rate != timing.refresh_rate) {
-		if (display->drm_conn && display->drm_conn->kdev)
-			sysfs_notify(&display->drm_conn->kdev->kobj, NULL, "dynamic_fps");
-	}
-#endif
-
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:
 	mutex_unlock(&display->display_lock);
@@ -8156,38 +8146,6 @@ static void __exit dsi_display_unregister(void)
 }
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-ssize_t dsi_display_dynamic_fps_read(struct drm_connector *connector,
-			char *buf)
-{
-	struct dsi_display *display = NULL;
-	struct dsi_bridge *c_bridge = NULL;
-	struct dsi_display_mode *cur_mode = NULL;
-	ssize_t ret = 0;
-
-	if (!connector || !connector->encoder || !connector->encoder->bridge) {
-		pr_err("Invalid invalid connector/encoder/bridge ptr\n");
-		return -EINVAL;
-	}
-
-	c_bridge = to_dsi_bridge(connector->encoder->bridge);
-	display = c_bridge->display;
-	if (!display || !display->panel) {
-		pr_err("Invalid display/panel ptr\n");
-		return -EINVAL;
-	}
-
-	mutex_lock(&display->display_lock);
-	cur_mode = display->panel->cur_mode;
-	if (cur_mode) {
-		ret = snprintf(buf, PAGE_SIZE, "%d\n", cur_mode->timing.refresh_rate);
-	} else {
-		ret = snprintf(buf, PAGE_SIZE, "%s\n", "null");
-	}
-	mutex_unlock(&display->display_lock);
-
-	return ret;
-}
-
 ssize_t dsi_display_mipi_reg_write(struct drm_connector *connector,
 			char *buf, size_t count)
 {

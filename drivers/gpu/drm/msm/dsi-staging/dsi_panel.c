@@ -34,7 +34,6 @@
 #include <asm/fcntl.h>
 
 #include <linux/export.h>
-#include "xiaomi_frame_stat.h"
 #endif
 
 /**
@@ -61,8 +60,6 @@
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
 static struct dsi_read_config g_dsi_read_cfg;
 
-extern struct frame_stat fm_stat;
-struct dsi_panel *g_panel;
 int panel_disp_param_send_lock(struct dsi_panel *panel, int param);
 int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config);
 #endif
@@ -1700,18 +1697,6 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 		goto error;
 	}
 	dfps_caps->dfps_support = true;
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (dfps_caps->dfps_support) {
-		supported = utils->read_bool(utils->data,
-			"qcom,mdss-dsi-pan-enable-smart-fps");
-		if (supported) {
-			pr_debug("[%s] Smart DFPS is supported\n", name);
-			dfps_caps->smart_fps_support = true;
-		} else
-			dfps_caps->smart_fps_support = false;
-	}
-#endif
 
 	/* calculate max and min fps */
 	dfps_caps->max_refresh_rate = dfps_caps->dfps_list[0];
@@ -3682,7 +3667,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	panel->thermal_hbm_disabled = false;
 	panel->hbm_enabled = false;
 	panel->skip_dimmingon = STATE_NONE;
-	panel->backlight_delta = 1;
 	panel->in_aod = false;
 	panel->backlight_pulse_flag = false;
 
@@ -3808,8 +3792,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	rc = dsi_panel_parse_mi_config(panel, of_node);
 	if (rc)
 		pr_err("failed to parse mi config, rc=%d\n", rc);
-
-	g_panel = panel;
 #endif
 
 	drm_panel_init(&panel->drm_panel);
@@ -4615,12 +4597,6 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	if ((param & 0x00F00000) == 0xD00000)
 		param = (param & 0x0FF00000);
 
-	/* set smart fps status */
-	if (param & 0xF0000000) {
-		fm_stat.enabled = param & 0x01;
-		pr_info("[LCD] smart dfps enable = [%d]\n", fm_stat.enabled);
-	}
-
 	temp = param & 0x0000000F;
 	switch (temp) {
 	case DISPPARAM_WARM:
@@ -4959,23 +4935,23 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	switch (temp) {
 	case DISPPARAM_DFPS_LEVEL1:
 		pr_info("DFPS:30fps\n");
-		panel->panel_max_frame_rate = false;
+		/* no-op */
 		break;
 	case DISPPARAM_DFPS_LEVEL2:
 		pr_info("DFPS:45fps\n");
-		panel->panel_max_frame_rate = false;
+		/* no-op */
 		break;
 	case DISPPARAM_DFPS_LEVEL3:
 		pr_info("DFPS:60fps\n");
-		panel->panel_max_frame_rate = false;
+		/* no-op */
 		break;
 	case DISPPARAM_DFPS_LEVEL4:
 		pr_info("DFPS:90fps\n");
-		panel->panel_max_frame_rate = false;
+		/* no-op */
 		break;
 	case DISPPARAM_DFPS_LEVEL5:
 		pr_info("DFPS:120fps\n");
-		panel->panel_max_frame_rate = true;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_30HZ:
 		pr_info("QSYNC:30HZ\n");
@@ -5262,7 +5238,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	panel->in_aod = false;
 	panel->backlight_pulse_flag = false;
 	panel->skip_dimmingon = STATE_NONE;
-	idle_status = false;
 #endif
 
 	mutex_unlock(&panel->panel_lock);

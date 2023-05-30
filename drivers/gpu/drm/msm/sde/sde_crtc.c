@@ -70,16 +70,10 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <drm/drm_mipi_dsi.h>
-#include "xiaomi_frame_stat.h"
 #endif
 
 #define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
 #define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#define to_drm_connector(d) dev_get_drvdata(d)
-#define to_dsi_bridge(x) container_of((x), struct dsi_bridge, base)
-#endif
 
 struct sde_crtc_custom_events {
 	u32 event;
@@ -88,10 +82,7 @@ struct sde_crtc_custom_events {
 };
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-struct drm_crtc *gcrtc;
 bool g_idleflag = true;
-bool idle_status;
-extern struct frame_stat fm_stat;
 #endif
 
 static int sde_crtc_power_interrupt_handler(struct drm_crtc *crtc_drm,
@@ -100,10 +91,6 @@ static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *idle_irq);
 static int sde_crtc_pm_event_handler(struct drm_crtc *crtc, bool en,
 		struct sde_irq_callback *noirq);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-static int sde_crtc_tp_event_handler(struct drm_crtc *crtc_drm,
-	bool en, struct sde_irq_callback *irq);
-#endif
 
 static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_AD_BACKLIGHT, sde_cp_ad_interrupt},
@@ -111,9 +98,6 @@ static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_IDLE_NOTIFY, sde_crtc_idle_interrupt_handler},
 	{DRM_EVENT_HISTOGRAM, sde_cp_hist_interrupt},
 	{DRM_EVENT_SDE_POWER, sde_crtc_pm_event_handler},
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	{DRM_EVENT_TOUCH, sde_crtc_tp_event_handler},
-#endif
 };
 
 /* default input fence timeout, in ms */
@@ -3090,15 +3074,11 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 		SDE_ATRACE_END("signal_release_fence");
 	}
 
-	if (fevent->event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE) {
+	if (fevent->event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE)
 		/* this api should be called without spin_lock */
 		_sde_crtc_retire_event(fevent->connector, fevent->ts,
 				(fevent->event & SDE_ENCODER_FRAME_EVENT_ERROR)
 				? SDE_FENCE_SIGNAL_ERROR : SDE_FENCE_SIGNAL);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-		frame_stat_collector(0, RETIRE_FENCE_TS);
-#endif
-	}
 
 	if (fevent->event & SDE_ENCODER_FRAME_EVENT_PANEL_DEAD)
 		SDE_ERROR("crtc%d ts:%lld received panel dead event\n",
@@ -3835,9 +3815,6 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	if (sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
 					MSM_DISPLAY_VIDEO_MODE) &&
 		kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work))
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-		idle_status = false;
-#endif
 		SDE_DEBUG("idle notify work cancelled\n");
 
 	/*
@@ -3884,9 +3861,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	int idle_time = 0;
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	static int idle_time_enable = false;
-	ktime_t get_input_fence_ts;
-	ktime_t now;
-	s64 duration;
 #endif
 
 	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
@@ -3956,15 +3930,7 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 		sde_plane_restore(plane);
 
 	/* wait for acquire fences before anything else is done */
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	now = ktime_get();
-#endif
 	_sde_crtc_wait_for_fences(crtc);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	get_input_fence_ts = ktime_get();
-	duration = ktime_to_ns(ktime_sub(get_input_fence_ts, now));
-	frame_stat_collector(duration, GET_INPUT_FENCE_TS);
-#endif
 
 	/* schedule the idle notify delayed work */
 #ifdef CONFIG_MACH_XIAOMI_SWEET
@@ -4001,10 +3967,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 			sde_plane_set_error(plane, true);
 		sde_plane_flush(plane);
 	}
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	gcrtc = crtc;
-#endif
 
 	/* Kickoff will be scheduled by outer layer */
 	SDE_ATRACE_END("sde_crtc_atomic_flush");
@@ -6924,51 +6886,9 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 		event.length = sizeof(u32);
 		msm_mode_object_event_notify(&crtc->base, crtc->dev,
 				&event, (u8 *)&ret);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-		idle_status = true;
-#endif
-
 		SDE_DEBUG("crtc[%d]: idle timeout notified\n", crtc->base.id);
 	}
 }
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-void sde_crtc_touch_notify(void)
-{
-	int ret = 0;
-	struct drm_event event;
-	struct dsi_bridge *c_bridge = NULL;
-	struct dsi_display *dsi_display = NULL;
-	struct drm_encoder *encoder = NULL;
-
-	if (gcrtc) {
-		list_for_each_entry(encoder, &gcrtc->dev->mode_config.encoder_list, head) {
-			if (encoder->crtc != gcrtc)
-				continue;
-
-			c_bridge = container_of(encoder->bridge, struct dsi_bridge, base);
-			if (c_bridge)
-				dsi_display = c_bridge->display;
-			break;
-		}
-
-		if (dsi_display && dsi_display->is_prim_display && 
-			dsi_display->panel && !dsi_display->panel->panel_max_frame_rate) {
-			if (dsi_display->panel->dfps_caps.smart_fps_support && fm_stat.enabled) {
-				dsi_display->panel->panel_max_frame_rate = true;
-				calc_fps(0, (int)true);
-			} else {
-				event.type = DRM_EVENT_TOUCH;
-				event.length = sizeof(u32);
-				msm_mode_object_event_notify(&gcrtc->base, gcrtc->dev,
-					&event, (u8 *)&ret);
-			}
-			gcrtc = NULL;
-		}
-	}
-}
-EXPORT_SYMBOL(sde_crtc_touch_notify);
-#endif
 
 /* initialize crtc */
 struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
@@ -7279,14 +7199,6 @@ static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
 {
 	return 0;
 }
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-static int sde_crtc_tp_event_handler(struct drm_crtc *crtc_drm,
-	bool en, struct sde_irq_callback *irq)
-{
-	return 0;
-}
-#endif
 
 /**
  * sde_crtc_update_cont_splash_settings - update mixer settings

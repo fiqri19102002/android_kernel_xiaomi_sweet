@@ -364,18 +364,6 @@ static ssize_t disp_param_show(struct device *device,
 	return ret;
 }
 
-extern ssize_t smart_fps_value_show(struct device *device,
-			   struct device_attribute *attr,
-			   char *buf);
-
-static ssize_t dynamic_fps_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_connector *connector = to_drm_connector(dev);
-
-	return dsi_display_dynamic_fps_read(connector, buf);
-}
-
 static ssize_t mipi_reg_show(struct device *device,
 				  struct device_attribute *attr,
 				  char *buf)
@@ -452,8 +440,6 @@ static DEVICE_ATTR_RO(panel_info);
 static DEVICE_ATTR_RW(disp_param);
 static DEVICE_ATTR_RO(doze_brightness);
 static DEVICE_ATTR_RW(doze_backlight);
-static DEVICE_ATTR_RO(smart_fps_value);
-static DEVICE_ATTR_RO(dynamic_fps);
 static DEVICE_ATTR_RW(mipi_reg);
 #endif
 
@@ -467,8 +453,6 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_disp_param.attr,
 	&dev_attr_doze_brightness.attr,
 	&dev_attr_doze_backlight.attr,
-	&dev_attr_smart_fps_value.attr,
-	&dev_attr_dynamic_fps.attr,
 	&dev_attr_mipi_reg.attr,
 	&dev_attr_thermal_hbm_disabled.attr,
 #endif

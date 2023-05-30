@@ -183,9 +183,6 @@ int dsi_display_disp_param_get(struct drm_connector *connector,
 int dsi_display_disp_param_set(struct drm_connector *connector,
 				     u32 param_type);
 
-ssize_t dsi_display_dynamic_fps_read(struct drm_connector *connector,
-					     char *buf);
-
 ssize_t dsi_display_mipi_reg_write(struct drm_connector *connector,
 					     char *buf, size_t count);
 ssize_t dsi_display_mipi_reg_read(struct drm_connector *connector,

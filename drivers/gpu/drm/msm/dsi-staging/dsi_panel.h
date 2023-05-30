@@ -89,11 +89,6 @@ struct dsi_dfps_capabilities {
 	u32 *dfps_list;
 	u32 dfps_list_len;
 	bool dfps_support;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	/* smart fps control */
-	bool smart_fps_support;
-	u32 smart_fps_value;
-#endif
 };
 
 struct dsi_dyn_clk_caps {
@@ -260,7 +255,6 @@ struct dsi_panel {
 	struct delayed_work cmds_work;
 	struct delayed_work nolp_bl_delay_work;
 	u32 last_bl_lvl;
-	s32 backlight_delta;
 	u32 backlight_pulse_threshold;
 	/* DC bkl */
 	bool dc_enable;
@@ -272,14 +266,12 @@ struct dsi_panel {
 	u32 hbm_brightness;
 	u32 doze_backlight_threshold;
 	bool f4_51_ctrl_flag; /* For the f4_36 panel */
-	u32 hbm_ntfy_skip_flag;
 	u32 hbm_off_51_index;
 
 	u8 panel_read_data[BUF_LEN_MAX];
 
 	bool in_aod; /* set  DISPPARAM_DOZE_BRIGHTNESS_HBM/LBM only in AOD */
 	int doze_brightness;
-	bool panel_max_frame_rate;
 
 	int doze_lbm_brightness;
 	int doze_hbm_brightness;

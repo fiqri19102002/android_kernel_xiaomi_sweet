@@ -18,9 +18,6 @@
 #include "sde_formats.h"
 #include "dsi_display.h"
 #include "sde_trace.h"
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#include "xiaomi_frame_stat.h"
-#endif
 
 #define SDE_DEBUG_VIDENC(e, fmt, ...) SDE_DEBUG("enc%d intf%d " fmt, \
 		(e) && (e)->base.parent ? \
@@ -600,13 +597,9 @@ static void sde_encoder_phys_vid_vblank_irq(void *arg, int irq_idx)
 	/* signal only for master, where there is a pending kickoff */
 	if (sde_encoder_phys_vid_is_master(phys_enc)) {
 		if (atomic_add_unless(&phys_enc->pending_retire_fence_cnt,
-					-1, 0)) {
+					-1, 0))
 			event |= SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE |
 				SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-			frame_stat_collector(0, VBLANK_TS);
-#endif
-		}
 	}
 
 not_flushed:
