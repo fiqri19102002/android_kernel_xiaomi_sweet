@@ -33,12 +33,6 @@
 #include <asm/uaccess.h>
 #include <asm/fcntl.h>
 
-#define DSI_READ_WRITE_PANEL_DEBUG 1
-#if DSI_READ_WRITE_PANEL_DEBUG
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#endif
-
 #include <linux/export.h>
 #include "xiaomi_frame_stat.h"
 #endif
@@ -71,12 +65,6 @@ extern struct frame_stat fm_stat;
 struct dsi_panel *g_panel;
 int panel_disp_param_send_lock(struct dsi_panel *panel, int param);
 int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config);
-#if DSI_READ_WRITE_PANEL_DEBUG
-static int string_merge_into_buf(const char *str, int len, char *buf);
-static struct dsi_read_config read_reg;
-static struct proc_dir_entry *mipi_proc_entry;
-#define MIPI_PROC_NAME "mipi_reg"
-#endif
 #endif
 
 enum dsi_dsc_ratio_type {
@@ -3952,260 +3940,6 @@ void dsi_panel_put(struct dsi_panel *panel)
 	kfree(panel);
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#if DSI_READ_WRITE_PANEL_DEBUG
-static int dsi_display_write_panel(struct dsi_panel *panel,
-				struct dsi_panel_cmd_set *cmd_sets)
-{
-	int rc = 0, i = 0;
-	ssize_t len;
-	struct dsi_cmd_desc *cmds;
-	u32 count;
-	enum dsi_cmd_set_state state;
-	struct dsi_display_mode *mode;
-	const struct mipi_dsi_host_ops *ops = panel->host->ops;
-
-	if (!panel || !panel->cur_mode)
-		return -EINVAL;
-
-	mode = panel->cur_mode;
-
-	cmds = cmd_sets->cmds;
-	count = cmd_sets->count;
-	state = cmd_sets->state;
-
-	if (count == 0) {
-		pr_debug("[%s] No commands to be sent for state\n",
-			 panel->name);
-		goto error;
-	}
-
-	for (i = 0; i < count; i++) {
-		if (state == DSI_CMD_SET_STATE_LP)
-			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
-
-		if (cmds->last_command)
-			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
-
-		len = ops->transfer(panel->host, &cmds->msg);
-		if (len < 0) {
-			rc = len;
-			pr_err("failed to set cmds, rc=%d\n", rc);
-			goto error;
-		}
-
-		if (cmds->post_wait_ms)
-			usleep_range(cmds->post_wait_ms * 1000,
-					((cmds->post_wait_ms * 1000) + 10));
-		cmds++;
-	}
-error:
-	return rc;
-}
-
-static ssize_t mipi_reg_procfs_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *offp)
-{
-	struct dsi_panel_cmd_set cmd_sets = {0, 0, 0, 0, NULL};
-	struct seq_file *seq = (struct seq_file *)file->private_data;
-	struct dsi_panel *panel = (struct dsi_panel *)seq->private;
-	int retval = 0, dlen = 0;
-	u32 packet_count = 0;
-	u8 *tmp = NULL, *p_tmp = NULL, *data = NULL;
-	u8 pbuf[2];
-
-	mutex_lock(&panel->panel_lock);
-
-	if (!panel || !panel->panel_initialized) {
-		pr_err("[LCD] panel not ready!\n");
-		mutex_unlock(&panel->panel_lock);
-		return -EAGAIN;
-	}
-
-	tmp = kzalloc(count, GFP_KERNEL);
-	if (!tmp) {
-		mutex_unlock(&panel->panel_lock);
-		return -ENOMEM;
-	}
-
-	if (copy_from_user(tmp, buf, count)) {
-		retval = -EFAULT;
-		goto exit_free1;
-	}
-	tmp[count - 1] = '\0';
-
-	pr_debug("%s: copy_from_user buf: %s\n", __func__, tmp);
-
-	p_tmp = tmp;
-	memcpy(pbuf, p_tmp, 2);
-	read_reg.enabled = simple_strtol(pbuf, NULL, 10);
-	p_tmp = p_tmp + 3;
-	memcpy(pbuf, p_tmp, 2);
-	read_reg.cmds_rlen = simple_strtol(pbuf, NULL, 10);
-	p_tmp = p_tmp + 3;
-
-	data = kzalloc(count - 6, GFP_KERNEL);
-	if (!data) {
-		retval = -ENOMEM;
-		goto exit_free1;
-	}
-
-	data[count - 6 - 1] = '\0';
-	dlen = string_merge_into_buf(p_tmp, count - 6, data);
-	if (dlen <= 0)
-		goto exit_free2;
-
-	retval = dsi_panel_get_cmd_pkt_count(data, dlen, &packet_count);
-
-	if (!packet_count) {
-		pr_err("%s: get pkt count failed!\n", __func__);
-		goto exit_free2;
-	}
-
-	if (cmd_sets.cmds) {
-		kfree(cmd_sets.cmds);
-		cmd_sets.cmds = NULL;
-	}
-
-	retval = dsi_panel_alloc_cmd_packets(&cmd_sets, packet_count);
-	if (retval) {
-		pr_err("%s: failed to allocate cmd packets, ret=%d\n", __func__, retval);
-		goto exit_free2;
-	}
-
-	retval = dsi_panel_create_cmd_packets(data, dlen, packet_count,
-						  cmd_sets.cmds);
-	if (retval) {
-		pr_err("%s: failed to create cmd packets, ret=%d\n", __func__, retval);
-		goto exit_free3;
-	}
-
-	if (read_reg.enabled) {
-		read_reg.read_cmd = cmd_sets;
-		retval = dsi_display_read_panel(panel, &read_reg);
-		if (retval <= 0) {
-			pr_err("%s: [%s]failed to read cmds, rc=%d\n", __func__, panel->name, retval);
-			goto exit_free4;
-		}
-	} else {
-		read_reg.read_cmd = cmd_sets;
-		retval = dsi_display_write_panel(panel, &cmd_sets);
-		if (retval) {
-			pr_err("%s: [%s] failed to send cmds, rc=%d\n", __func__, panel->name, retval);
-			goto exit_free4;
-		}
-	}
-
-	pr_info("[%s]: mipi_procfs_write done!\n", panel->name);
-	retval = count;
-
-exit_free4:
-	dsi_panel_destroy_cmd_packets(&cmd_sets);
-exit_free3:
-	dsi_panel_dealloc_cmd_packets(&cmd_sets);
-exit_free2:
-	kfree(data);
-exit_free1:
-	kfree(tmp);
-	mutex_unlock(&panel->panel_lock);
-	return retval;
-}
-static int mipi_reg_procfs_show(struct seq_file *m, void *v)
-{
-	struct dsi_panel *panel = (struct dsi_panel *)m->private;
-	int i = 0;
-
-	mutex_lock(&panel->panel_lock);
-	if (!panel) {
-		mutex_unlock(&panel->panel_lock);
-		return -EAGAIN;
-	}
-
-	if (read_reg.enabled) {
-		seq_printf(m, "return value: ");
-		for (i = 0; i < read_reg.cmds_rlen; i++) {
-			printk("0x%02x ", read_reg.rbuf[i]);
-			seq_printf(m, "0x%02x ", read_reg.rbuf[i]);
-		}
-	}
-
-	seq_printf(m, "\n");
-	mutex_unlock(&panel->panel_lock);
-
-	return 0;
-}
-
-static int mipi_reg_procfs_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, mipi_reg_procfs_show, g_panel);
-}
-
-const struct file_operations mipi_reg_proc_fops = {
-	.owner   = THIS_MODULE,
-	.open    = mipi_reg_procfs_open,
-	.write   = mipi_reg_procfs_write,
-	.read    = seq_read,
-	.llseek  = seq_lseek,
-	.release = single_release,
-};
-#endif
-
-int dsi_panel_get_lockdowninfo_for_tp(unsigned char *plockdowninfo)
-{
-	int retval = 0, i = 0;
-	struct dsi_panel_cmd_set cmd_sets = {0};
-
-	while (g_panel && !g_panel->cur_mode) {
-		pr_debug("[%s][%s] cur_mode is null\n", __func__, g_panel->name);
-		msleep_interruptible(1000);
-	}
-
-	/* don't read lockdown info by mipi bus when the screen is off */
-	while (!g_panel->panel_initialized) {
-		msleep_interruptible(1000);
-	}
-
-	if (g_panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_LOCKDOWN_INFO].cmds) {
-		mutex_lock(&g_panel->panel_lock);
-		cmd_sets.cmds = g_panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_LOCKDOWN_INFO].cmds;
-		cmd_sets.count = 1;
-		cmd_sets.state = g_panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_READ_LOCKDOWN_INFO].state;
-		retval = dsi_display_write_panel(g_panel, &cmd_sets);
-		if (retval) {
-			mutex_unlock(&g_panel->panel_lock);
-			pr_err("[%s][%s] failed to send cmds, rc=%d\n", __func__, g_panel->name, retval);
-			return EIO;
-		}
-
-		read_reg.enabled = 1;
-		read_reg.cmds_rlen = 8;
-		read_reg.read_cmd = cmd_sets;
-		read_reg.read_cmd.cmds = &cmd_sets.cmds[1];
-		retval = dsi_display_read_panel(g_panel, &read_reg);
-		if (retval <= 0) {
-			mutex_unlock(&g_panel->panel_lock);
-			pr_err("[%s][%s] failed to send cmds, rc=%d\n", __func__, g_panel->name, retval);
-			return EIO;
-		}
-
-		for (i = 0; i < 8; i++) {
-			pr_debug("[%s][%d]0x%x", __func__, __LINE__, read_reg.rbuf[i]);
-			plockdowninfo[i] = read_reg.rbuf[i];
-		}
-
-		if (!strcmp(g_panel->name,"xiaomi 37 02 0b video mode dsc dsi panel")) {
-			plockdowninfo[7] = 0x01;
-			pr_info("plockdowninfo[7] = 0x%x \n", plockdowninfo[7]);
-		}
-		mutex_unlock(&g_panel->panel_lock);
-		return retval;
-	} else {
-		return EINVAL;
-	}
-}
-EXPORT_SYMBOL(dsi_panel_get_lockdowninfo_for_tp);
-#endif
-
 int dsi_panel_drv_init(struct dsi_panel *panel,
 		       struct mipi_dsi_host *host)
 {
@@ -4259,14 +3993,6 @@ int dsi_panel_drv_init(struct dsi_panel *panel,
 		goto error_gpio_release;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#if DSI_READ_WRITE_PANEL_DEBUG
-	mipi_proc_entry = proc_create(MIPI_PROC_NAME, 0, NULL, &mipi_reg_proc_fops);
-	if (!mipi_proc_entry)
-		printk(KERN_WARNING "mipi_reg: unable to create proc entry.\n");
-#endif
-#endif
-
 	goto exit;
 
 error_gpio_release:
@@ -4312,15 +4038,6 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 
 	panel->host = NULL;
 	memset(&panel->mipi_device, 0x0, sizeof(panel->mipi_device));
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#if DSI_READ_WRITE_PANEL_DEBUG
-	if (mipi_proc_entry) {
-		remove_proc_entry(MIPI_PROC_NAME, NULL);
-		mipi_proc_entry = NULL;
-	}
-#endif
-#endif
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -5472,51 +5189,6 @@ int dsi_panel_pre_mode_switch_to_cmd(struct dsi_panel *panel)
 }
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-static char string_to_hex(const char *str)
-{
-	char val_l = 0;
-	char val_h = 0;
-
-	if (str[0] >= '0' && str[0] <= '9')
-		val_h = str[0] - '0';
-	else if (str[0] <= 'f' && str[0] >= 'a')
-		val_h = 10 + str[0] - 'a';
-	else if (str[0] <= 'F' && str[0] >= 'A')
-		val_h = 10 + str[0] - 'A';
-
-	if (str[1] >= '0' && str[1] <= '9')
-		val_l = str[1]-'0';
-	else if (str[1] <= 'f' && str[1] >= 'a')
-		val_l = 10 + str[1] - 'a';
-	else if (str[1] <= 'F' && str[1] >= 'A')
-		val_l = 10 + str[1] - 'A';
-
-	return (val_h << 4) | val_l;
-}
-
-static int string_merge_into_buf(const char *str, int len, char *buf)
-{
-	int buf_size = 0;
-	int i = 0;
-	const char *p = str;
-
-	while (i < len) {
-		if (((p[0] >= '0' && p[0] <= '9') ||
-			(p[0] <= 'f' && p[0] >= 'a') ||
-			(p[0] <= 'F' && p[0] >= 'A')) && ((i + 1) < len)) {
-			buf[buf_size] = string_to_hex(p);
-			pr_info("0x%02x ", buf[buf_size]);
-			buf_size++;
-			i += 2;
-			p += 2;
-		} else {
-			i++;
-			p++;
-		}
-	}
-	return buf_size;
-}
-
 int panel_disp_param_send(struct dsi_display *display, int param_type)
 {
 	int rc = 0;
