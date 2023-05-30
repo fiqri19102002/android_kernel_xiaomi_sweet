@@ -5015,29 +5015,6 @@ int dsi_panel_send_roi_dcs(struct dsi_panel *panel, int ctrl_idx,
 }
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-static void handle_dsi_read_data(struct dsi_panel *panel, struct dsi_read_config *read_config)
-{
-	int i = 0;
-	int param_nb = 0, write_len = 0;
-	u32 read_cnt = 0, bit_valide = 0;
-
-	u8 *pRead_data = panel->panel_read_data;
-	read_cnt = read_config->cmds_rlen;
-	bit_valide = read_config->valid_bits;
-
-	for (i = 0; i < read_cnt; i++) {
-		if ((bit_valide & 0x1) && ((pRead_data + 8) < (panel->panel_read_data + BUF_LEN_MAX))) {
-			write_len = scnprintf(pRead_data, 8, "p%d=%d", param_nb, read_config->rbuf[i]);
-			pRead_data += write_len;
-			param_nb ++;
-		}
-		bit_valide = bit_valide >> 1;
-	}
-	pr_info("read %s from panel\n", panel->panel_read_data);
-
-	return;
-}
-
 extern struct msm_display_info *g_msm_display_info;
 extern bool g_idleflag;
 int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
