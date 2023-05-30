@@ -858,8 +858,8 @@ bool dc_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 	int writeCmd[21] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1};
 	u8 *tx_buf;
 
-	if (panel->k6_dc_flag && panel->dc_enable && bl_lvl < panel->dc_threshold &&
-		bl_lvl != 0 && !panel->in_aod && panel->doze_brightness == DOZE_BRIGHTNESS_INVALID) {
+	if (panel->dc_enable && bl_lvl < panel->dc_threshold && bl_lvl != 0 && !panel->in_aod && 
+		panel->doze_brightness == DOZE_BRIGHTNESS_INVALID) {
 		crcValue = 0.5 + mDCBLCoeff[0] * bl_lvl + mDCBLCoeff[1];
 		if (crcValue > 255)
 			crcValue = 255;
@@ -3801,11 +3801,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	if (rc || panel->doze_lbm_brightness <= 0) {
 		pr_err("can't get doze lbm brightness\n");
 	}
-
-	panel->k6_dc_flag = utils->read_bool(of_node,
-			"qcom,mdss-dsi-panel-k6-dc-flag");
-	if (panel->k6_dc_flag)
-		pr_info("k6 dc flag enabled.\n");
 
 	rc = of_property_read_u32(of_node,
 			"qcom,mdss-dsi-panel-dc-threshold", &panel->dc_threshold);

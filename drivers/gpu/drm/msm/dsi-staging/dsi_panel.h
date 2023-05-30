@@ -269,7 +269,6 @@ struct dsi_panel {
 	bool dc_enable;
 	bool backlight_pulse_flag; /* true = 4 pulse and false = 1 pulse */
 	u32 dc_threshold;
-	bool k6_dc_flag;
 
 	bool hbm_enabled;
 	bool thermal_hbm_disabled;
