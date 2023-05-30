@@ -26,9 +26,6 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_flip_work.h>
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#include <drm/drm_notifier.h>
-#endif
 #include <linux/clk/qcom.h>
 #include <linux/sde_rsc.h>
 
@@ -46,31 +43,6 @@
 #include "sde_power_handle.h"
 #include "sde_core_perf.h"
 #include "sde_trace.h"
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#include "dsi_drm.h"
-
-#include <linux/err.h>
-#include <linux/list.h>
-#include <linux/of.h>
-#include <linux/err.h>
-#include "msm_drv.h"
-#include "sde_connector.h"
-#include "msm_mmu.h"
-#include "dsi_display.h"
-#include "dsi_panel.h"
-#include "dsi_ctrl.h"
-#include "dsi_ctrl_hw.h"
-#include "dsi_drm.h"
-#include "dsi_clk.h"
-#include "dsi_pwr.h"
-#include "sde_dbg.h"
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <drm/drm_mipi_dsi.h>
-#endif
 
 #define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
 #define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)

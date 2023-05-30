@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
- * Copyright (C) 2021 XiaoMi, Inc.
  * Author: Rob Clark <robdclark@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -306,9 +305,6 @@ struct sde_crtc {
 
 	/* blob for histogram data */
 	struct drm_property_blob *hist_blob;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	bool is_primary_sde_crtc;
-#endif
 };
 
 #define to_sde_crtc(x) container_of(x, struct sde_crtc, base)

@@ -1764,8 +1764,7 @@ static struct drm_driver msm_driver = {
 	.patchlevel         = MSM_VERSION_PATCHLEVEL,
 };
 
-#ifdef CONFIG_PM_SLEEP
-#if defined(CONFIG_MACH_XIAOMI_SWEET)
+#ifdef CONFIG_MACH_XIAOMI_SWEET
 static int msm_pm_prepare(struct device *dev)
 {
 	atomic_inc(&resume_pending);
@@ -1780,6 +1779,7 @@ static void msm_pm_complete(struct device *dev)
 }
 #endif
 
+#ifdef CONFIG_PM_SLEEP
 static int msm_pm_suspend(struct device *dev)
 {
 	struct drm_device *ddev;

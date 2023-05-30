@@ -221,7 +221,6 @@ struct drm_device {
 	int switch_power_state;
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	int doze_state;
-	int pre_state;
 	int doze_brightness;
 #endif
 };

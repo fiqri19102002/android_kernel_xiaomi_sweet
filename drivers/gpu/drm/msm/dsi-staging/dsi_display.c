@@ -72,13 +72,12 @@ static const struct of_device_id dsi_display_dt_match[] = {
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 struct dsi_display *primary_display;
+
 struct dsi_display *get_primary_display(void)
 {
 	return primary_display;
 }
 EXPORT_SYMBOL(get_primary_display);
-
-static int dsi_display_write_panel(struct dsi_display *display,struct dsi_panel_cmd_set *cmd_sets);
 
 void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
 			struct dsi_display_mode *adj_mode)
@@ -248,9 +247,6 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 {
 	struct dsi_display *dsi_display = display;
 	struct dsi_panel *panel;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct drm_device *drm_dev;
-#endif
 	u32 bl_scale, bl_scale_ad;
 	u64 bl_temp;
 	int rc = 0;
@@ -259,9 +255,6 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 		return -EINVAL;
 
 	panel = dsi_display->panel;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	drm_dev = dsi_display->drm_dev;
-#endif
 
 	mutex_lock(&panel->panel_lock);
 	if (!dsi_panel_initialized(panel)) {
@@ -7754,9 +7747,6 @@ int dsi_display_enable(struct dsi_display *display)
 {
 	int rc = 0;
 	struct dsi_display_mode *mode;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct dsi_panel *panel;
-#endif
 
 	if (!display || !display->panel) {
 		pr_err("Invalid params\n");
@@ -7768,10 +7758,6 @@ int dsi_display_enable(struct dsi_display *display)
 		return -EINVAL;
 	}
 	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	panel = display->panel;
-#endif
 
 	/* Engine states and panel states are populated during splash
 	 * resource init and hence we return early

@@ -237,7 +237,6 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	}
 
 	event = dev->doze_state;
-
 	g_notify_data.data = &event;
 #endif
 
@@ -270,14 +269,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	if (c_bridge->display->is_prim_display && atomic_read(&prim_panel_is_on)) {
 		cancel_delayed_work_sync(&prim_panel_work);
 		__pm_relax(&prim_panel_wakelock);
-		if (c_bridge->display->panel->panel_mode == DSI_OP_VIDEO_MODE) {
-			pr_debug("skip set display config for video panel in fpc\n");
-			return;
-		} else if (c_bridge->display->panel->panel_mode == DSI_OP_CMD_MODE &&
-			c_bridge->dsi_mode.dsi_mode_flags != DSI_MODE_FLAG_DMS) {
-			pr_debug("skip set display config because timming not switch for command panel\n");
-			return;
-		}
+		return;
 	}
 
 	drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
@@ -336,7 +328,6 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
  *            If timeout, dsi bridge will disable panel to avoid fingerprint
  *            touch by mistake.
  */
-
 int dsi_bridge_interface_enable(int timeout)
 {
 	int ret = 0;
@@ -559,7 +550,6 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	}
 
 	event = dev->doze_state;
-
 	g_notify_data.data = &event;
 #endif
 
@@ -574,6 +564,7 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
 #endif
+
 	rc = dsi_display_disable(c_bridge->display);
 	if (rc) {
 		pr_err("[%d] DSI display disable failed, rc=%d\n",

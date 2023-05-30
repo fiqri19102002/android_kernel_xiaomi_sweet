@@ -254,7 +254,6 @@ struct dsi_panel {
 	u32 backlight_pulse_threshold;
 	/* DC bkl */
 	bool dc_enable;
-	bool backlight_pulse_flag; /* true = 4 pulse and false = 1 pulse */
 	u32 dc_threshold;
 
 	bool hbm_enabled;
@@ -391,16 +390,6 @@ struct dsi_panel *dsi_panel_ext_bridge_get(struct device *parent,
 int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel);
 
 void dsi_panel_ext_bridge_put(struct dsi_panel *panel);
-
-int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt);
-int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
-				u32 packet_count);
-int dsi_panel_create_cmd_packets(const char *data,
-				u32 length,
-				u32 count,
-				struct dsi_cmd_desc *cmd);
-void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
-void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 int dsi_panel_write_cmd_set(struct dsi_panel *panel,

@@ -29,11 +29,6 @@
 #include "dsi_panel_mi.h"
 
 #include <drm/drm_notifier.h>
-#include <linux/fs.h>
-#include <asm/uaccess.h>
-#include <asm/fcntl.h>
-
-#include <linux/export.h>
 #endif
 
 /**
@@ -730,6 +725,7 @@ int dsi_panel_set_doze_backlight(struct dsi_display *display)
 		pr_err("invalid display/panel/drm_dev\n");
 		return -EINVAL;
 	}
+
 	panel = dsi_display->panel;
 	drm_dev = dsi_display->drm_dev;
 
@@ -753,7 +749,7 @@ int dsi_panel_set_doze_backlight(struct dsi_display *display)
 	}
 
 	if (drm_dev->doze_brightness == DOZE_BRIGHTNESS_LBM || drm_dev->doze_brightness == DOZE_BRIGHTNESS_HBM)
-		last_aod_hbm_status  = drm_dev->doze_brightness;
+		last_aod_hbm_status = drm_dev->doze_brightness;
 
 	if (drm_dev && ((drm_dev->doze_state == DRM_BLANK_UNBLANK) ||
 		drm_dev->doze_state == DRM_BLANK_LP1 || drm_dev->doze_state == DRM_BLANK_LP2)) {
@@ -799,6 +795,7 @@ ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf)
 		pr_err("invalid display/panel/drm_dev\n");
 		return -EINVAL;
 	}
+
 	panel = dsi_display->panel;
 	drm_dev = dsi_display->drm_dev;
 
@@ -2016,7 +2013,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 #endif
 };
 
-int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
+static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
 {
 	const u32 cmd_set_min_size = 7;
 	u32 count = 0;
@@ -2040,7 +2037,7 @@ int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
 	return 0;
 }
 
-int dsi_panel_create_cmd_packets(const char *data,
+static int dsi_panel_create_cmd_packets(const char *data,
 					u32 length,
 					u32 count,
 					struct dsi_cmd_desc *cmd)
@@ -2085,7 +2082,7 @@ error_free_payloads:
 	return rc;
 }
 
-void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set)
+static void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set)
 {
 	u32 i = 0;
 	struct dsi_cmd_desc *cmd;
@@ -2096,12 +2093,12 @@ void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set)
 	}
 }
 
-void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set)
+static void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set)
 {
 	kfree(set->cmds);
 }
 
-int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
+static int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
 					u32 packet_count)
 {
 	u32 size;
@@ -2513,7 +2510,7 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	panel->bl_config.dcs_type_ss_ea = utils->read_bool(utils->data,
-								"qcom,mdss-dsi-bl-dcs-type-ss-ea");
+			"qcom,mdss-dsi-bl-dcs-type-ss-ea");
 #endif
 
 	data = utils->get_property(utils->data, "qcom,bl-update-flag", NULL);
@@ -3435,8 +3432,11 @@ static int dsi_panel_parse_esd_config(struct dsi_panel *panel)
 	esd_config->status_mode = ESD_MODE_MAX;
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	/* esd-err-flag method will be prefered */
-	esd_config->esd_err_irq_gpio = of_get_named_gpio_flags(panel->panel_of_node,
-		"qcom,esd-err-irq-gpio", 0, (enum of_gpio_flags *) & (esd_config->esd_err_irq_flags));
+	esd_config->esd_err_irq_gpio = of_get_named_gpio_flags(
+			panel->panel_of_node,
+			"qcom,esd-err-irq-gpio",
+			0,
+			(enum of_gpio_flags *)&(esd_config->esd_err_irq_flags));
 	if (gpio_is_valid(esd_config->esd_err_irq_gpio)) {
 		esd_config->esd_err_irq = gpio_to_irq(esd_config->esd_err_irq_gpio);
 		rc = gpio_request(esd_config->esd_err_irq_gpio, "esd_err_irq_gpio");
@@ -3587,14 +3587,12 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	}
 
 	panel->f4_51_ctrl_flag = utils->read_bool(utils->data, "qcom,dispparam-f4-51-ctrl-flag");
-
 	if (panel->f4_51_ctrl_flag) {
 		rc = utils->read_u32(of_node,
 				"qcom,mdss-dsi-panel-hbm-off-51-index", &panel->hbm_off_51_index);
 		if (rc) {
 			pr_err("qcom,mdss-dsi-panel-hbm-off-51-index not defined,but need\n");
 		}
-
 	}
 
 	rc = utils->read_u32(of_node,
@@ -3640,7 +3638,6 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	panel->hbm_enabled = false;
 	panel->skip_dimmingon = STATE_NONE;
 	panel->in_aod = false;
-	panel->backlight_pulse_flag = false;
 
 	panel->dc_enable = false;
 
@@ -5200,7 +5197,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 
 	panel->hbm_enabled = false;
 	panel->in_aod = false;
-	panel->backlight_pulse_flag = false;
 	panel->skip_dimmingon = STATE_NONE;
 #endif
 
@@ -5299,7 +5295,6 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	panel->skip_dimmingon = STATE_NONE;
 	panel->hbm_enabled = false;
 	panel->in_aod = false;
-	panel->backlight_pulse_flag = false;
 #endif
 
 	mutex_unlock(&panel->panel_lock);
@@ -5545,7 +5540,7 @@ ssize_t dsi_panel_mipi_reg_write(struct dsi_panel *panel,
 			pr_err("input buffer conversion failed\n");
 			goto exit_free0;
 		}
-		g_dsi_read_cfg.enabled= !!tmp_data;
+		g_dsi_read_cfg.enabled = !!tmp_data;
 	}
 
 	/* Removes leading whitespace from input_copy */
