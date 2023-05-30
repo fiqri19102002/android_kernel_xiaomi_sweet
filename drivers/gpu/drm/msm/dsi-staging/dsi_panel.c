@@ -4667,6 +4667,10 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		pr_info("paper mode 7\n");
 		/* no-op */
 		break;
+	case DISPPARAM_WHITEPOINT_XY:
+		pr_info("read xy coordinate\n");
+		/* no-op */
+		break;
 	default:
 		break;
 	}
@@ -4784,6 +4788,18 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 			panel->hbm_enabled = true;
 		}
 		break;
+	case DISPPARAM_HBM_FOD_ON:
+		pr_info("hbm fod on\n");
+		/* no-op */
+		break;
+	case DISPPARAM_HBM_FOD2NORM:
+		pr_info("hbm fod to normal mode\n");
+		/* no-op */
+		break;
+	case DISPPARAM_HBM_FOD_OFF:
+		pr_info("hbm fod off\n");
+		/* no-op */
+		break;
 	case DISPPARAM_HBM_OFF:
 		if (param & DISPPARAM_THERMAL_SET)
 			is_thermal_call = true;
@@ -4868,6 +4884,13 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		pr_info("doze Off\n");
 		/* no-op */
 		break;
+	case DISPPARAM_FOD_BACKLIGHT:
+		pr_info("FOD backlight");
+		/* no-op */
+		break;
+	case DISPPARAM_HBM_BACKLIGHT_RESEND:
+		/* no-op */
+		break;
 	case DISPPARAM_CRC_OFF:
 		pr_info("crc off\n");
 		/* no-op */
@@ -4878,6 +4901,20 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 
 	temp = param & 0x0F000000;
 	switch (temp) {
+	case DISPPARAM_FOD_BACKLIGHT_ON:
+		/* no-op */
+		break;
+	case DISPPARAM_FOD_BACKLIGHT_OFF:
+		/* no-op */
+		break;
+	case DISPPARAM_ELVSS_DIMMING_ON:
+		pr_info("elvss dimming on\n");
+		/* no-op */
+		break;
+	case DISPPARAM_ELVSS_DIMMING_OFF:
+		pr_info("elvss dimming off\n");
+		/* no-op */
+		break;
 	case DISPPARAM_FLAT_MODE_ON:
 		pr_info("flat mode on\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_ON);
@@ -4885,6 +4922,18 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 	case DISPPARAM_FLAT_MODE_OFF:
 		pr_info("flat mode off\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_OFF);
+		break;
+	case DISPPARAM_DEMURA_LEVEL02:
+		pr_info("DEMURA LEVEL 02\n");
+		/* no-op */
+		break;
+	case DISPPARAM_DEMURA_LEVEL08:
+		pr_info("DEMURA LEVEL 08\n");
+		/* no-op */
+		break;
+	case DISPPARAM_DEMURA_LEVEL0D:
+		pr_info("DEMURA LEVEL 0D\n");
+		/* no-op */
 		break;
 	case DISPPARAM_IDLE_ON:
 		pr_info("idle on\n");
