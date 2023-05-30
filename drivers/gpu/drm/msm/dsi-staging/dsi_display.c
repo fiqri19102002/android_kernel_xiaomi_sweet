@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,6 +20,10 @@
 #include <linux/of_gpio.h>
 #include <linux/err.h>
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#include <drm/drm_notifier.h>
+#endif
+
 #include "msm_drv.h"
 #include "sde_connector.h"
 #include "msm_mmu.h"
@@ -32,8 +37,14 @@
 #include "sde_dbg.h"
 #include "dsi_parser.h"
 #include "dsi_phy.h"
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#include "dsi_panel_mi.h"
+#endif
 
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#define to_dsi_bridge(x) container_of((x), struct dsi_bridge, base)
+#endif
 #define INT_BASE_10 10
 #define NO_OVERRIDE -1
 
@@ -58,6 +69,53 @@ static const struct of_device_id dsi_display_dt_match[] = {
 	{.compatible = "qcom,dsi-display"},
 	{}
 };
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+struct dsi_display *primary_display;
+
+struct dsi_display *get_primary_display(void)
+{
+	return primary_display;
+}
+EXPORT_SYMBOL(get_primary_display);
+
+void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
+			struct dsi_display_mode *adj_mode)
+{
+	u32 count = 0;
+	int rc = 0;
+	struct dsi_display_mode *cur_mode = NULL;
+
+	if (!display || !adj_mode || !display->panel) {
+		pr_err("Invalid params\n");
+		return;
+	}
+
+	cur_mode = display->panel->cur_mode;
+	if (!cur_mode) {
+		pr_err("Invalid params\n");
+		return;
+	}
+
+	count = display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
+	if (!count) {
+		pr_info("No need to change panel gamma\n");
+		return;
+	}
+
+	if (adj_mode->timing.refresh_rate == 120)
+		rc = panel_disp_param_send_lock(display->panel, DISPPARAM_BC_120HZ);
+	else if (adj_mode->timing.refresh_rate == 60)
+		rc = panel_disp_param_send_lock(display->panel, DISPPARAM_BC_60HZ);
+
+	if (rc)
+		pr_err("%s: send cmds failed...", __func__);
+	else
+		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
+
+	return;
+}
+#endif
 
 static void dsi_display_mask_ctrl_error_interrupts(struct dsi_display *display,
 			u32 mask, bool enable)
@@ -241,7 +299,62 @@ error:
 	return rc;
 }
 
-static int dsi_display_cmd_engine_enable(struct dsi_display *display)
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+/* thermal_hbm_disabled */
+int dsi_display_set_thermal_hbm_disabled(struct drm_connector *connector,
+			bool thermal_hbm_disabled)
+{
+	struct sde_connector *c_conn = NULL;
+	struct dsi_display *display = NULL;
+
+	if (!connector) {
+		pr_err("invalid argument\n");
+		return -EINVAL;
+	}
+
+	c_conn = to_sde_connector(connector);
+	if (!c_conn->display) {
+		pr_err("invalid connector display\n");
+		return -EINVAL;
+	}
+
+	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
+		pr_err("unsupported connector (%s)\n", connector->name);
+		return -EINVAL;
+	}
+
+	display = (struct dsi_display *)c_conn->display;
+	return dsi_panel_set_thermal_hbm_disabled(display->panel, thermal_hbm_disabled);
+}
+
+int dsi_display_get_thermal_hbm_disabled(struct drm_connector *connector,
+			bool *thermal_hbm_disabled)
+{
+	struct sde_connector *c_conn = NULL;
+	struct dsi_display *display = NULL;
+
+	if (!connector) {
+		pr_err("invalid argument\n");
+		return -EINVAL;
+	}
+
+	c_conn = to_sde_connector(connector);
+	if (!c_conn->display) {
+		pr_err("invalid connector display\n");
+		return -EINVAL;
+	}
+
+	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
+		pr_err("unsupported connector (%s)\n", connector->name);
+		return -EINVAL;
+	}
+
+	display = (struct dsi_display *)c_conn->display;
+	return dsi_panel_get_thermal_hbm_disabled(display->panel, thermal_hbm_disabled);
+}
+#endif
+
+int dsi_display_cmd_engine_enable(struct dsi_display *display)
 {
 	int rc = 0;
 	int i;
@@ -285,7 +398,7 @@ done:
 	return rc;
 }
 
-static int dsi_display_cmd_engine_disable(struct dsi_display *display)
+int dsi_display_cmd_engine_disable(struct dsi_display *display)
 {
 	int rc = 0;
 	int i;
@@ -471,7 +584,7 @@ error:
 }
 
 /* Allocate memory for cmd dma tx buffer */
-static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
+int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 {
 	int rc = 0, cnt = 0;
 	struct dsi_display_ctrl *display_ctrl;
@@ -854,6 +967,89 @@ release_panel_lock:
 	return rc;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config)
+{
+	struct mipi_dsi_host *host;
+	struct dsi_display *display;
+	struct dsi_display_ctrl *ctrl;
+	struct dsi_cmd_desc *cmds;
+	int i, rc = 0, count = 0;
+	u32 flags = 0;
+
+	if (panel == NULL || read_config == NULL)
+		return -EINVAL;
+
+	host = panel->host;
+	if (host) {
+		display = to_dsi_display(host);
+		if (display == NULL)
+			return -EINVAL;
+	} else
+		return -EINVAL;
+
+	if (!panel->panel_initialized) {
+		pr_info("Panel not initialized\n");
+		return -EINVAL;
+	}
+
+	if (!read_config->enabled) {
+		pr_info("read operation was not permitted\n");
+		return -EPERM;
+	}
+
+	dsi_display_clk_ctrl(display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_ON);
+
+	ctrl = &display->ctrl[display->cmd_master_idx];
+
+	rc = dsi_display_cmd_engine_enable(display);
+	if (rc) {
+		pr_err("cmd engine enable failed\n");
+		rc = -EPERM;
+		goto exit_ctrl;
+	}
+
+	if (display->tx_cmd_buf == NULL) {
+		rc = dsi_host_alloc_cmd_tx_buffer(display);
+		if (rc) {
+			pr_err("failed to allocate cmd tx buffer memory\n");
+			goto exit;
+		}
+	}
+
+	count = read_config->read_cmd.count;
+	cmds = read_config->read_cmd.cmds;
+	if (cmds->last_command) {
+		cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+		flags |= DSI_CTRL_CMD_LAST_COMMAND;
+	}
+	flags |= (DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ);
+
+	memset(read_config->rbuf, 0x0, sizeof(read_config->rbuf));
+	cmds->msg.rx_buf = read_config->rbuf;
+	cmds->msg.rx_len = read_config->cmds_rlen;
+
+	rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &(cmds->msg), flags);
+	if (rc <= 0) {
+		pr_err("rx cmd transfer failed rc=%d\n", rc);
+		goto exit;
+	}
+
+	for (i = 0; i < read_config->cmds_rlen; i++)
+		pr_info("0x%x ", read_config->rbuf[i]);
+	pr_info("\n");
+
+exit:
+	dsi_display_cmd_engine_disable(display);
+exit_ctrl:
+	dsi_display_clk_ctrl(display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_OFF);
+
+	return rc;
+}
+#endif
+
 static int dsi_display_cmd_prepare(const char *cmd_buf, u32 cmd_buf_len,
 		struct dsi_cmd_desc *cmd, u8 *payload, u32 payload_len)
 {
@@ -1059,23 +1255,61 @@ int dsi_display_set_power(struct drm_connector *connector,
 {
 	struct dsi_display *display = disp;
 	int rc = 0;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	struct drm_notify_data g_notify_data;
+	struct drm_device *dev = NULL;
+	int event = 0;
+#endif
 
 	if (!display || !display->panel) {
 		pr_err("invalid display/panel\n");
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (!connector || !connector->dev) {
+		pr_err("invalid connector/dev\n");
+		return -EINVAL;
+	} else {
+		dev = connector->dev;
+		event = dev->doze_state;
+	}
+
+	g_notify_data.data = &event;
+#endif
+
 	switch (power_mode) {
 	case SDE_MODE_DPMS_LP1:
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
+#endif
 		rc = dsi_panel_set_lp1(display->panel);
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		if (!rc)
+			dsi_panel_set_doze_backlight(display);
+		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
+#endif
 		break;
 	case SDE_MODE_DPMS_LP2:
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
+#endif
 		rc = dsi_panel_set_lp2(display->panel);
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
+#endif
 		break;
 	case SDE_MODE_DPMS_ON:
 		if (display->panel->power_mode == SDE_MODE_DPMS_LP1 ||
-			display->panel->power_mode == SDE_MODE_DPMS_LP2)
+			display->panel->power_mode == SDE_MODE_DPMS_LP2) {
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+			drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
+#endif
 			rc = dsi_panel_set_nolp(display->panel);
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+			drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
+#endif
+		}
 		break;
 	case SDE_MODE_DPMS_OFF:
 	default:
@@ -5488,6 +5722,9 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	display->pdev = pdev;
 	display->boot_disp = boot_disp;
 	display->dsi_type = dsi_type;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	display->is_prim_display = true;
+#endif
 
 	dsi_display_parse_cmdline_topology(display, index);
 
@@ -6407,6 +6644,9 @@ int dsi_display_get_modes(struct dsi_display *display,
 exit:
 	*out_modes = display->modes;
 	rc = 0;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	primary_display = display;
+#endif
 
 error:
 	if (rc)
@@ -6674,6 +6914,9 @@ int dsi_display_set_mode(struct dsi_display *display,
 {
 	int rc = 0;
 	struct dsi_display_mode adj_mode;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	struct dsi_mode_info timing;
+#endif
 
 	if (!display || !mode || !display->panel) {
 		pr_err("Invalid params\n");
@@ -6683,6 +6926,9 @@ int dsi_display_set_mode(struct dsi_display *display,
 	mutex_lock(&display->display_lock);
 
 	adj_mode = *mode;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	timing = adj_mode.timing;
+#endif
 	adjust_timing_by_ctrl_count(display, &adj_mode);
 
 	/*For dynamic DSI setting, use specified clock rate */
@@ -6700,6 +6946,11 @@ int dsi_display_set_mode(struct dsi_display *display,
 		pr_err("[%s] failed to set mode\n", display->name);
 		goto error;
 	}
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (adj_mode.timing.refresh_rate == 60)
+		dsi_display_panel_gamma_mode_change(display, &adj_mode);
+#endif
 
 	if (!display->panel->cur_mode) {
 		display->panel->cur_mode =
@@ -7816,6 +8067,51 @@ static void __exit dsi_display_unregister(void)
 	dsi_ctrl_drv_unregister();
 	dsi_phy_drv_unregister();
 }
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+ssize_t dsi_display_mipi_reg_write(struct drm_connector *connector,
+			char *buf, size_t count)
+{
+	struct dsi_display *display = NULL;
+	struct dsi_bridge *c_bridge = NULL;
+
+	if (!connector || !connector->encoder || !connector->encoder->bridge) {
+		pr_err("Invalid invalid connector/encoder/bridge ptr\n");
+		return -EINVAL;
+	}
+
+	c_bridge = to_dsi_bridge(connector->encoder->bridge);
+	display = c_bridge->display;
+	if (!display || !display->panel) {
+		pr_err("Invalid display/panel ptr\n");
+		return -EINVAL;
+	}
+
+	return dsi_panel_mipi_reg_write(display->panel, buf, count);
+}
+
+ssize_t dsi_display_mipi_reg_read(struct drm_connector *connector,
+			char *buf)
+{
+	struct dsi_display *display = NULL;
+	struct dsi_bridge *c_bridge = NULL;
+
+	if (!connector || !connector->encoder || !connector->encoder->bridge) {
+		pr_err("Invalid invalid connector/encoder/bridge ptr\n");
+		return -EINVAL;
+	}
+
+	c_bridge = to_dsi_bridge(connector->encoder->bridge);
+	display = c_bridge->display;
+	if (!display || !display->panel) {
+		pr_err("Invalid display/panel ptr\n");
+		return -EINVAL;
+	}
+
+	return dsi_panel_mipi_reg_read(display->panel, buf);
+}
+#endif
+
 module_param_string(dsi_display0, dsi_display_primary, MAX_CMDLINE_PARAM_LEN,
 								0600);
 MODULE_PARM_DESC(dsi_display0,

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -302,12 +303,28 @@ enum dsi_cmd_set_type {
 	DSI_CMD_SET_LP1,
 	DSI_CMD_SET_LP2,
 	DSI_CMD_SET_NOLP,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	DSI_CMD_SET_DOZE_HBM,
+	DSI_CMD_SET_DOZE_LBM,
+#endif
 	DSI_CMD_SET_PPS,
 	DSI_CMD_SET_ROI,
 	DSI_CMD_SET_TIMING_SWITCH,
 	DSI_CMD_SET_POST_TIMING_SWITCH,
 	DSI_CMD_SET_QSYNC_ON,
 	DSI_CMD_SET_QSYNC_OFF,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	DSI_CMD_SET_DISP_DIMMINGON,
+	DSI_CMD_SET_DISP_DIMMINGOFF,
+	DSI_CMD_SET_DISP_HBM_ON,
+	DSI_CMD_SET_DISP_HBM_OFF,
+	DSI_CMD_SET_DISP_FLAT_MODE_ON,
+	DSI_CMD_SET_DISP_FLAT_MODE_OFF,
+	DSI_CMD_SET_DISP_DC_CRC_SETTING_60HZ,
+	DSI_CMD_SET_DISP_DC_CRC_SETTING_120HZ,
+	DSI_CMD_SET_DISP_BC_120HZ,
+	DSI_CMD_SET_DISP_BC_60HZ,
+#endif
 	DSI_CMD_SET_MAX
 };
 
