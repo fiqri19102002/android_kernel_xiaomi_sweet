@@ -4364,7 +4364,9 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	if (rc)
 		pr_err("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 		       panel->name, rc);
+#ifndef CONFIG_MACH_XIAOMI_SWEET
 exit:
+#endif
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
@@ -4570,7 +4572,6 @@ int dsi_panel_send_roi_dcs(struct dsi_panel *panel, int ctrl_idx,
 }
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-extern struct msm_display_info *g_msm_display_info;
 extern bool g_idleflag;
 int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 {
@@ -4955,48 +4956,39 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_30HZ:
 		pr_info("QSYNC:30HZ\n");
-		panel->qsync_min_fps = 30;
-		g_msm_display_info->qsync_min_fps = 30;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_40HZ:
 		pr_info("QSYNC:40HZ\n");
-		panel->qsync_min_fps = 40;
-		g_msm_display_info->qsync_min_fps = 40;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_50HZ:
 		pr_info("QSYNC:50HZ\n");
-		panel->qsync_min_fps = 50;
-		g_msm_display_info->qsync_min_fps = 50;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_60HZ:
 		pr_info("QSYNC:60HZ\n");
-		panel->qsync_min_fps = 60;
-		g_msm_display_info->qsync_min_fps = 60;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_70HZ:
 		pr_info("QSYNC:70HZ\n");
-		panel->qsync_min_fps = 70;
-		g_msm_display_info->qsync_min_fps = 70;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_80HZ:
 		pr_info("QSYNC:80HZ\n");
-		panel->qsync_min_fps = 80;
-		g_msm_display_info->qsync_min_fps = 80;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_90HZ:
 		pr_info("QSYNC:90HZ\n");
-		panel->qsync_min_fps = 90;
-		g_msm_display_info->qsync_min_fps = 90;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_100HZ:
 		pr_info("QSYNC:100HZ\n");
-		panel->qsync_min_fps = 100;
-		g_msm_display_info->qsync_min_fps = 100;
+		/* no-op */
 		break;
 	case DISPPARAM_QSYNC_MIN_FPS_110HZ:
 		pr_info("QSYNC:110HZ\n");
-		panel->qsync_min_fps = 110;
-		g_msm_display_info->qsync_min_fps = 110;
+		/* no-op */
 		break;
 	default:
 		break;

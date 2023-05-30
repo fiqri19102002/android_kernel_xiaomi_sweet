@@ -5468,10 +5468,6 @@ static const struct drm_encoder_funcs sde_encoder_funcs = {
 		.early_unregister = sde_encoder_early_unregister,
 };
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-struct msm_display_info *g_msm_display_info;
-#endif
-
 struct drm_encoder *sde_encoder_init_with_ops(
 		struct drm_device *dev,
 		struct msm_display_info *disp_info,
@@ -5484,9 +5480,6 @@ struct drm_encoder *sde_encoder_init_with_ops(
 	int drm_enc_mode = DRM_MODE_ENCODER_NONE;
 	char name[SDE_NAME_SIZE];
 	int ret = 0, i, intf_index = INTF_MAX;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	static int j = 0;
-#endif
 	struct sde_encoder_phys *phys = NULL;
 
 	sde_enc = kzalloc(sizeof(*sde_enc), GFP_KERNEL);
@@ -5556,14 +5549,6 @@ struct drm_encoder *sde_encoder_init_with_ops(
 			sde_encoder_esd_trigger_work_handler);
 
 	memcpy(&sde_enc->disp_info, disp_info, sizeof(*disp_info));
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (0 == j) {
-		g_msm_display_info = &sde_enc->disp_info;
-	}
-	j++;
-	pr_info("[%s] g_msm_display_info is %p",__func__, g_msm_display_info);
-#endif
 
 	SDE_DEBUG_ENC(sde_enc, "created\n");
 
