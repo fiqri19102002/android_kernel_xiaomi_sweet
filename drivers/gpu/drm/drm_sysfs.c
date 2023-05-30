@@ -440,10 +440,6 @@ static ssize_t thermal_hbm_disabled_show(struct device *device,
 
 	return snprintf(buf, PAGE_SIZE, "%d\n", thermal_hbm_disabled);
 }
-
-extern ssize_t wp_info_show(struct device *device,
-				struct device_attribute *attr,
-				char *buf);
 #endif
 
 static DEVICE_ATTR_RW(status);
@@ -459,7 +455,6 @@ static DEVICE_ATTR_RW(doze_backlight);
 static DEVICE_ATTR_RO(smart_fps_value);
 static DEVICE_ATTR_RO(dynamic_fps);
 static DEVICE_ATTR_RW(mipi_reg);
-static DEVICE_ATTR_RO(wp_info);
 #endif
 
 static struct attribute *connector_dev_attrs[] = {
@@ -476,7 +471,6 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_dynamic_fps.attr,
 	&dev_attr_mipi_reg.attr,
 	&dev_attr_thermal_hbm_disabled.attr,
-	&dev_attr_wp_info.attr,
 #endif
 	NULL
 };

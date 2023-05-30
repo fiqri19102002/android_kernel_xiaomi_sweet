@@ -1130,22 +1130,6 @@ exit_ctrl:
 
 	return rc;
 }
-
-char oled_wp_str[20] = {0};
-
-static int __init oled_wp_setup(char* str)
-{
-	strlcpy(oled_wp_str, str, sizeof(oled_wp_str));
-	return 1;
-}
-__setup("androidboot.oled_wp=", oled_wp_setup);
-
-ssize_t wp_info_show(struct device *device,
-			struct device_attribute *attr,
-			char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", oled_wp_str);
-}
 #endif
 
 static int dsi_display_cmd_prepare(const char *cmd_buf, u32 cmd_buf_len,

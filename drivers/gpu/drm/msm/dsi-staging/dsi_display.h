@@ -694,20 +694,6 @@ int dsi_display_pre_kickoff(struct drm_connector *connector,
 int dsi_display_pre_commit(void *display,
 		struct msm_display_conn_params *params);
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-/**
- * wp_info_show() - Print white point infomation
- * @device:         Pointer to device
- * @attr:           Pointer to device attribute
- * @buf:            The buffer stored white point infomation
- *
- * Return: Type ssize_t
- */
-ssize_t wp_info_show(struct device *device,
-		struct device_attribute *attr,
-		char *buf);
-#endif
-
 /**
  * dsi_display_get_dst_format() - get dst_format from DSI display
  * @connector:        Pointer to drm connector structure
