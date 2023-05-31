@@ -3538,7 +3538,7 @@ void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
 	if (rc)
 		pr_err("%s: send cmds failed...", __func__);
 	else
-		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
+		pr_debug("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
 
 exit:
 	mutex_unlock(&panel->panel_lock);
