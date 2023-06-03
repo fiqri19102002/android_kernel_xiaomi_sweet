@@ -2497,17 +2497,6 @@ static int bq2597x_charger_probe(struct i2c_client *client,
 	struct device_node *node = client->dev.of_node;
 	int ret;
 
-	ret = i2c_smbus_read_byte_data(client, BQ2597X_REG_13);
-	if (ret < 0) {
-		client->addr = 0x65;
-		ret = i2c_smbus_read_byte_data(client, BQ2597X_REG_13);
-		if (ret < 0) {
-			bq_err("failed to communicate with chip\n")
-			return -ENODEV;
-		}
-		parallel_mode_wa = true;
-	}
-
 	bq = devm_kzalloc(&client->dev, sizeof(struct bq2597x), GFP_KERNEL);
 	if (!bq)
 		return -ENOMEM;
@@ -2524,6 +2513,17 @@ static int bq2597x_charger_probe(struct i2c_client *client,
 
 	bq->resume_completed = true;
 	bq->irq_waiting = false;
+
+	ret = i2c_smbus_read_byte_data(client, BQ2597X_REG_13);
+	if (ret < 0) {
+		client->addr = 0x65;
+		ret = i2c_smbus_read_byte_data(client, BQ2597X_REG_13);
+		if (ret < 0) {
+			bq_err("failed to communicate with chip\n")
+			return -ENODEV;
+		}
+		parallel_mode_wa = true;
+	}
 
 	ret = bq2597x_detect_device(bq);
 	if (ret) {
