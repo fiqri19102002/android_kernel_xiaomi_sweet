@@ -63,6 +63,12 @@ else
 	export LOCALBUILD=1
 fi
 
+# Setup and apply patch KernelSU in root dir
+if ! [ -d "$KERNEL_DIR"/KernelSU ]; then
+	curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+	git apply KernelSU-hook.patch
+fi
+
 # Export build host name
 if [ $LOCALBUILD == "0" ]; then
 	export KBUILD_BUILD_HOST="CircleCI"
