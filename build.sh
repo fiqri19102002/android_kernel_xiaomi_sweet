@@ -171,22 +171,24 @@ set_naming() {
 	fi
 }
 
+# Set function for send messages to Telegram
+send_tg_msg() {
+	tg_post_msg "<b>Docker OS: </b><code>$DISTRO</code>" \
+	            "<b>Kernel Version : </b><code>$KERVER</code>" \
+	            "<b>Date : </b><code>$DATE</code>" \
+	            "<b>Device : </b><code>Redmi Note 10 Pro (sweet)</code>" \
+	            "<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>" \
+	            "<b>Host CPU Name : </b><code>$CPU_NAME</code>" \
+	            "<b>Host Core Count : </b><code>$PROCS core(s)</code>" \
+	            "<b>Host RAM Count : </b><code>$TOTAL_RAM_GB GB</code>" \
+	            "<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>" \
+	            "<b>Branch : </b><code>$BRANCH</code>" \
+	            "<b>Last Commit : </b><code>$COMMIT_HEAD</code>"
+}
+
 # Set function for starting compile
 compile() {
 	echo -e "Kernel compilation starting"
-	if [ $LOCALBUILD == "0" ]; then
-		tg_post_msg "<b>Docker OS: </b><code>$DISTRO</code>" \
-		            "<b>Kernel Version : </b><code>$KERVER</code>" \
-		            "<b>Date : </b><code>$DATE</code>" \
-		            "<b>Device : </b><code>Redmi Note 10 Pro (sweet)</code>" \
-		            "<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>" \
-		            "<b>Host CPU Name : </b><code>$CPU_NAME</code>" \
-		            "<b>Host Core Count : </b><code>$PROCS core(s)</code>" \
-		            "<b>Host RAM Count : </b><code>$TOTAL_RAM_GB GB</code>" \
-		            "<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>" \
-		            "<b>Branch : </b><code>$BRANCH</code>" \
-		            "<b>Last Commit : </b><code>$COMMIT_HEAD</code>"
-	fi
 	make O=out "$DEFCONFIG"
 	BUILD_START=$(date +"%s")
 	if [ $COMPILER == "clang" ]; then
@@ -267,6 +269,9 @@ gen_zip() {
 
 clone
 compiler_opt
+if [ $LOCALBUILD == "0" ]; then
+	send_tg_msg
+fi
 compile
 set_naming
 gen_zip
