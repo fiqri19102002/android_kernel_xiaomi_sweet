@@ -215,13 +215,13 @@ compile() {
 gen_zip() {
 	if [[ $LOCALBUILD == "1" || -d "$KERNEL_DIR"/KernelSU ]]; then
 		cd AnyKernel3 || exit
-		rm -rf dtb.img dtbo.img Image.gz-dtb *.zip
+		rm -rf dtbo/oss/dtbo.img dtb.img Image.gz-dtb *.zip
 		cd ..
 	fi
 
 	# Move kernel image to AnyKernel3
 	mv "$IMG_DIR"/dtb.img AnyKernel3/dtb.img
-	mv "$IMG_DIR"/dtbo.img AnyKernel3/dtbo.img
+	mv "$IMG_DIR"/dtbo.img AnyKernel3/dtbo/oss/dtbo.img
 	mv "$IMG_DIR"/Image AnyKernel3/Image.gz-dtb
 	cd AnyKernel3 || exit
 
