@@ -63,19 +63,16 @@ else
 	export LOCALBUILD=1
 fi
 
-# Setup and apply patch KernelSU in root dir
-if ! [ -d "$KERNEL_DIR"/KernelSU ]; then
-	curl -kLSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-	if [ -d "$KERNEL_DIR"/KernelSU ]; then
-		git apply KernelSU-hook.patch
-	fi
-fi
-
 # Export build host name
 if [ $LOCALBUILD == "0" ]; then
 	export KBUILD_BUILD_HOST="CircleCI"
 elif [ $LOCALBUILD == "1" ]; then
 	export KBUILD_BUILD_HOST=$(uname -a | awk '{print $2}')
+fi
+
+# Cleanup KernelSU first on local build
+if [[ -d "$KERNEL_DIR"/KernelSU && $LOCALBUILD == "1" ]]; then
+	rm -rf KernelSU drivers/kernelsu
 fi
 
 # Set function for telegram
@@ -92,6 +89,14 @@ tg_post_build() {
 	"${TELEGRAM_DIR}" -H \
         -f "$1" \
         "$2"
+}
+
+# Set function for setup KernelSU
+setup_ksu() {
+	curl -kLSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		git apply KernelSU-hook.patch
+	fi
 }
 
 # Set function for defconfig changes
@@ -144,8 +149,13 @@ clone() {
 
 # Set function for naming zip file
 set_naming() {
-	KERNEL_NAME="STRIX-sweet-personal-$ZIP_DATE"
-	export ZIP_NAME="$KERNEL_NAME.zip"
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		KERNEL_NAME="STRIX-sweet-ksu-personal-$ZIP_DATE"
+		export ZIP_NAME="$KERNEL_NAME.zip"
+	else
+		KERNEL_NAME="STRIX-sweet-personal-$ZIP_DATE"
+		export ZIP_NAME="$KERNEL_NAME.zip"
+	fi
 }
 
 # Set function for starting compile
@@ -191,6 +201,9 @@ compile() {
 		echo -e "Kernel successfully compiled"
 		if [ $LOCALBUILD == "1" ]; then
 			git restore arch/arm64/configs/vendor/sweet_defconfig
+			if [ -d "$KERNEL_DIR"/KernelSU ]; then
+				git restore drivers/ fs/
+			fi
 		fi
 	elif ! [ -f "$IMG_DIR"/Image.gz-dtb ]; then
 		echo -e "Kernel compilation failed"
@@ -199,6 +212,9 @@ compile() {
 		fi
 		if [ $LOCALBUILD == "1" ]; then
 			git restore arch/arm64/configs/vendor/sweet_defconfig
+			if [ -d "$KERNEL_DIR"/KernelSU ]; then
+				git restore drivers/ fs/
+			fi
 		fi
 		exit 1
 	fi
@@ -206,7 +222,7 @@ compile() {
 
 # Set function for zipping into a flashable zip
 gen_zip() {
-	if [ $LOCALBUILD == "1" ]; then
+	if [[ $LOCALBUILD == "1" || -d "$KERNEL_DIR"/KernelSU ]]; then
 		cd AnyKernel3 || exit
 		rm -rf dtbo/oss/dtbo.img dtb.img Image.gz-dtb *.zip
 		cd ..
@@ -236,6 +252,11 @@ gen_zip() {
 }
 
 clone
+cfg_changes
+compile
+set_naming
+gen_zip
+setup_ksu
 cfg_changes
 compile
 set_naming
