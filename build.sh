@@ -63,17 +63,16 @@ else
 	export LOCALBUILD=1
 fi
 
-# Setup and apply patch KernelSU in root dir
-if ! [ -d "$KERNEL_DIR"/KernelSU ]; then
-	curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-	git apply KernelSU-hook.patch
-fi
-
 # Export build host name
 if [ $LOCALBUILD == "0" ]; then
 	export KBUILD_BUILD_HOST="CircleCI"
 elif [ $LOCALBUILD == "1" ]; then
 	export KBUILD_BUILD_HOST=$(uname -a | awk '{print $2}')
+fi
+
+# Cleanup KernelSU first on local build
+if [[ -d "$KERNEL_DIR"/KernelSU && $LOCALBUILD == "1" ]]; then
+	rm -rf KernelSU drivers/kernelsu
 fi
 
 # Set function for telegram
@@ -92,6 +91,12 @@ tg_post_build() {
         "$2"
 }
 
+# Set funcrtion for setup KernelSU
+setup_ksu() {
+	curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+	git apply KernelSU-hook.patch
+}
+
 # Set function for defconfig changes
 cfg_changes() {
 	if [ $COMPILER == "clang" ]; then
@@ -108,6 +113,9 @@ cfg_changes() {
 			sed -i 's/# CONFIG_THINLTO is not set/CONFIG_THINLTO=y/g' arch/arm64/configs/vendor/sweet_defconfig
 		elif [ $COMPILER == "gcc" ]; then
 			sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		fi
+		if [ -d "$KERNEL_DIR"/KernelSU ]; then
+			sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/# CONFIG_CC_STACKPROTECTOR_STRONG is not set/g' arch/arm64/configs/vendor/sweet_defconfig
 		fi
 	fi
 }
@@ -142,8 +150,13 @@ clone() {
 
 # Set function for naming zip file
 set_naming() {
-	KERNEL_NAME="STRIX-sweet-personal-$ZIP_DATE"
-	export ZIP_NAME="$KERNEL_NAME.zip"
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		KERNEL_NAME="STRIX-sweet-ksu-personal-$ZIP_DATE"
+		export ZIP_NAME="$KERNEL_NAME.zip"
+	else
+		KERNEL_NAME="STRIX-sweet-personal-$ZIP_DATE"
+		export ZIP_NAME="$KERNEL_NAME.zip"
+	fi
 }
 
 # Set function for starting compile
@@ -177,6 +190,9 @@ compile() {
 		echo -e "Kernel successfully compiled"
 		if [ $LOCALBUILD == "1" ]; then
 			git restore arch/arm64/configs/vendor/sweet_defconfig
+			if [ -d "$KERNEL_DIR"/KernelSU ]; then
+				git restore drivers/Makefile drivers/input/input.c fs/exec.c fs/open.c fs/read_write.c fs/stat.c
+			fi
 		fi
 	elif ! [ -f "$IMG_DIR"/Image.gz-dtb ]; then
 		echo -e "Kernel compilation failed"
@@ -185,6 +201,9 @@ compile() {
 		fi
 		if [ $LOCALBUILD == "1" ]; then
 			git restore arch/arm64/configs/vendor/sweet_defconfig
+			if [ -d "$KERNEL_DIR"/KernelSU ]; then
+				git restore drivers/Makefile drivers/input/input.c fs/exec.c fs/open.c fs/read_write.c fs/stat.c
+			fi
 		fi
 		exit 1
 	fi
@@ -192,7 +211,7 @@ compile() {
 
 # Set function for zipping into a flashable zip
 gen_zip() {
-	if [ $LOCALBUILD == "1" ]; then
+	if [[ $LOCALBUILD == "1" || -d "$KERNEL_DIR"/KernelSU ]]; then
 		cd AnyKernel3 || exit
 		rm -rf dtb.img dtbo.img Image.gz-dtb *.zip
 		cd ..
@@ -222,6 +241,11 @@ gen_zip() {
 }
 
 clone
+cfg_changes
+compile
+set_naming
+gen_zip
+setup_ksu
 cfg_changes
 compile
 set_naming
