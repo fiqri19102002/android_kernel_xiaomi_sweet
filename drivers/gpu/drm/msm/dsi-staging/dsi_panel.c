@@ -808,53 +808,6 @@ ssize_t dsi_panel_get_doze_backlight(struct dsi_display *display, char *buf)
 
 	return rc;
 }
-
-bool dc_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
-{
-	int i = 0;
-	int crcValue = 255;
-	float mDCBLCoeff[2] = {0.5125, 4.9};
-	struct dsi_cmd_desc *cmds = NULL;
-	struct dsi_display_mode_priv_info *priv_info = panel->cur_mode->priv_info;
-	int writeCmd[21] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1};
-	u8 *tx_buf;
-
-	if (panel->dc_enable && bl_lvl < panel->dc_threshold && bl_lvl != 0 && !panel->in_aod && 
-		panel->doze_brightness == DOZE_BRIGHTNESS_INVALID) {
-		crcValue = 0.5 + mDCBLCoeff[0] * bl_lvl + mDCBLCoeff[1];
-		if (crcValue > 255)
-			crcValue = 255;
-		else if (crcValue < panel->bl_config.bl_min_level)
-			crcValue = panel->bl_config.bl_min_level;
-		else if (bl_lvl > panel->dc_threshold)
-			crcValue = 255;
-
-		if (panel->cur_mode->timing.refresh_rate == 60) {
-			cmds = priv_info->cmd_sets[DSI_CMD_SET_DISP_DC_CRC_SETTING_60HZ].cmds;
-			if (cmds) {
-				tx_buf = (u8 *)cmds[4].msg.tx_buf;
-				for (i = 0; i < 21; i++) {
-					writeCmd[i] = writeCmd[i] * (int)crcValue;
-					tx_buf[1 + i] = writeCmd[i];
-				}
-			}
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_CRC_SETTING_60HZ);
-		} else {
-			cmds = priv_info->cmd_sets[DSI_CMD_SET_DISP_DC_CRC_SETTING_120HZ].cmds;
-			if (cmds) {
-				tx_buf = (u8 *)cmds[4].msg.tx_buf;
-				for (i = 0; i < 21; i++) {
-					writeCmd[i] = writeCmd[i] * (int)crcValue;
-					tx_buf[1 + i] = writeCmd[i];
-				}
-			}
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_CRC_SETTING_120HZ);
-		}
-		return true;
-	} else {
-		return false;
-	}
-}
 #endif
 
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
@@ -868,12 +821,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (dc_set_backlight(panel, bl_lvl)) {
-		panel->last_bl_lvl = bl_lvl;
-		pr_debug("set dc backlight bacase dc enable %d, bl %d\n", panel->dc_enable, bl_lvl);
-		return rc;
-	}
-
 	if (0 == bl_lvl) {
 		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
 	}
@@ -3546,13 +3493,6 @@ static void nolp_backlight_delayed_work(struct work_struct *work)
 				struct dsi_panel, nolp_bl_delay_work.work);
 
 	panel->in_aod = false;
-	if (panel->last_bl_lvl != 0) {
-		if (panel->dc_enable && panel->last_bl_lvl < panel->dc_threshold)
-			dc_set_backlight(panel, panel->last_bl_lvl);
-		else
-			dsi_panel_set_backlight(panel, panel->last_bl_lvl);
-		pr_info("%s: set brightness = %d\n", __func__, panel->last_bl_lvl);
-	}
 }
 
 static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
