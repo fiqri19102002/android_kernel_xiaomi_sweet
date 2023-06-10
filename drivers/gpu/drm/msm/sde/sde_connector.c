@@ -30,15 +30,6 @@
 
 #define BL_NODE_NAME_SIZE 32
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-enum bkl_dimming_state {
-	STATE_NONE,
-	STATE_DIM_BLOCK,
-	STATE_DIM_RESTORE,
-	STATE_ALL
-};
-#endif
-
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
 #define AUTOREFRESH_MAX_FRAME_CNT 6
 
