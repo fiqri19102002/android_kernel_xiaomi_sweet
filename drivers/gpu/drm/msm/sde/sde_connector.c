@@ -1968,13 +1968,8 @@ static void sde_connector_check_status_work(struct work_struct *work)
 	}
 
 	mutex_lock(&conn->lock);
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (!conn->ops.check_status ||
-			(conn->dpms_mode != SDE_MODE_DPMS_ON)) {
-#else
 	if (!conn->ops.check_status ||
 			(conn->dpms_mode != DRM_MODE_DPMS_ON)) {
-#endif
 		SDE_DEBUG("dpms mode: %d\n", conn->dpms_mode);
 		mutex_unlock(&conn->lock);
 		return;
@@ -2225,11 +2220,7 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 	c_conn->display = display;
 
 	c_conn->dpms_mode = DRM_MODE_DPMS_ON;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	c_conn->lp_mode = SDE_MODE_DPMS_OFF;
-#else
 	c_conn->lp_mode = 0;
-#endif
 	c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 
 	sde_kms = to_sde_kms(priv->kms);
