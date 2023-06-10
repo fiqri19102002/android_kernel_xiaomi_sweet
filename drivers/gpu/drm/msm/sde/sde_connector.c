@@ -1,4 +1,5 @@
 /* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -91,6 +92,11 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	if (!bl_lvl && brightness)
 		bl_lvl = 1;
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bl_lvl && bl_lvl < display->panel->bl_config.bl_min_level)
+		bl_lvl = display->panel->bl_config.bl_min_level;
+#endif
 
 	if (!c_conn->allow_bl_update) {
 		c_conn->unset_bl_level = bl_lvl;
@@ -1143,6 +1149,12 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	/* connector-specific property handling */
 	idx = msm_property_index(&c_conn->property_info, property);
 	switch (idx) {
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	case CONNECTOR_PROP_LP:
+		if (connector->dev)
+			connector->dev->doze_state = val;
+		break;
+#endif
 	case CONNECTOR_PROP_OUT_FB:
 		/* clear old fb, if present */
 		if (c_state->out_fb)

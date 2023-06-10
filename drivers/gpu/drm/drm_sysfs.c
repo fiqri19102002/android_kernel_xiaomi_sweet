@@ -7,6 +7,7 @@
  * Copyright (c) 2004 Jon Smirl <jonsmirl@gmail.com>
  * Copyright (c) 2003-2004 Greg Kroah-Hartman <greg@kroah.com>
  * Copyright (c) 2003-2004 IBM Corp.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This file is released under the GPLv2
  *
@@ -18,6 +19,9 @@
 #include <linux/err.h>
 #include <linux/export.h>
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#include <drm/drm_encoder.h>
+#endif
 #include <drm/drm_sysfs.h>
 #include <drm/drmP.h>
 #include "drm_internal.h"
@@ -229,16 +233,54 @@ static ssize_t modes_show(struct device *device,
 	return written;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+extern int drm_get_panel_info(struct drm_bridge *bridge, char *name);
+static ssize_t panel_info_show(struct device *device,
+			    struct device_attribute *attr,
+			   char *buf)
+{
+	int written = 0;
+	char pname[128] = {0};
+	struct drm_connector *connector = NULL;
+	struct drm_encoder *encoder = NULL;
+	struct drm_bridge *bridge = NULL;
+
+	connector = to_drm_connector(device);
+	if (!connector)
+		return written;
+
+	encoder = connector->encoder;
+	if (!encoder)
+		return written;
+
+	bridge = encoder->bridge;
+	if (!bridge)
+		return written;
+
+	written = drm_get_panel_info(bridge, pname);
+	if (written)
+		return snprintf(buf, PAGE_SIZE, "panel_name=%s\n", pname);
+
+	return written;
+}
+#endif
+
 static DEVICE_ATTR_RW(status);
 static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+static DEVICE_ATTR_RO(panel_info);
+#endif
 
 static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_enabled.attr,
 	&dev_attr_dpms.attr,
 	&dev_attr_modes.attr,
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	&dev_attr_panel_info.attr,
+#endif
 	NULL
 };
 

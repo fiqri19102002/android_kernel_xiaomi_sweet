@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -301,8 +302,18 @@ void drm_bridge_post_disable(struct drm_bridge *bridge)
 	if (!bridge)
 		return;
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bridge->is_dsi_drm_bridge)
+		mutex_lock(&bridge->lock);
+#endif
+
 	if (bridge->funcs->post_disable)
 		bridge->funcs->post_disable(bridge);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bridge->is_dsi_drm_bridge)
+		mutex_unlock(&bridge->lock);
+#endif
 
 	drm_bridge_post_disable(bridge->next);
 }
@@ -352,10 +363,36 @@ void drm_bridge_pre_enable(struct drm_bridge *bridge)
 
 	drm_bridge_pre_enable(bridge->next);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bridge->is_dsi_drm_bridge)
+		mutex_lock(&bridge->lock);
+#endif
+
 	if (bridge->funcs->pre_enable)
 		bridge->funcs->pre_enable(bridge);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bridge->is_dsi_drm_bridge)
+		mutex_unlock(&bridge->lock);
+#endif
 }
 EXPORT_SYMBOL(drm_bridge_pre_enable);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+int drm_get_panel_info(struct drm_bridge *bridge, char *buf)
+{
+	int rc = 0;
+
+	if (!bridge)
+		return rc;
+
+	if (bridge->funcs->disp_get_panel_info)
+		return bridge->funcs->disp_get_panel_info(bridge, buf);
+
+	return rc;
+}
+EXPORT_SYMBOL(drm_get_panel_info);
+#endif
 
 /**
  * drm_bridge_enable - enables all bridges in the encoder chain

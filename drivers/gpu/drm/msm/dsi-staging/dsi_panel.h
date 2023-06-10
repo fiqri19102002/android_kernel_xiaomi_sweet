@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -119,6 +120,9 @@ struct dsi_backlight_config {
 	u32 bl_scale;
 	u32 bl_scale_ad;
 	bool bl_inverted_dbv;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	bool dcs_type_ss_ea;
+#endif
 
 	int en_gpio;
 	/* PWM params */
@@ -279,6 +283,11 @@ int dsi_panel_get_phy_props(struct dsi_panel *panel,
 			    struct dsi_panel_phy_props *phy_props);
 int dsi_panel_get_dfps_caps(struct dsi_panel *panel,
 			    struct dsi_dfps_capabilities *dfps_caps);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
+                        struct dsi_display_mode *adj_mode);
+#endif
 
 int dsi_panel_pre_prepare(struct dsi_panel *panel);
 
