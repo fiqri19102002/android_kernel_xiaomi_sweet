@@ -1,4 +1,5 @@
 /* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -91,6 +92,11 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	if (!bl_lvl && brightness)
 		bl_lvl = 1;
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	if (bl_lvl && bl_lvl < display->panel->bl_config.bl_min_level)
+		bl_lvl = display->panel->bl_config.bl_min_level;
+#endif
 
 	if (!c_conn->allow_bl_update) {
 		c_conn->unset_bl_level = bl_lvl;
@@ -1143,6 +1149,12 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	/* connector-specific property handling */
 	idx = msm_property_index(&c_conn->property_info, property);
 	switch (idx) {
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	case CONNECTOR_PROP_LP:
+		if (connector->dev)
+			connector->dev->doze_state = val;
+		break;
+#endif
 	case CONNECTOR_PROP_OUT_FB:
 		/* clear old fb, if present */
 		if (c_state->out_fb)
@@ -1842,6 +1854,41 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	return 0;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+static irqreturn_t esd_err_irq_handle(int irq, void *data)
+{
+	struct sde_connector *c_conn = data;
+	struct drm_event event;
+	bool panel_on = false;
+	char err_irq_gpio_value = 1;
+
+	if (!c_conn && !c_conn->display) {
+		SDE_ERROR("not able to get connector object\n");
+		return IRQ_HANDLED;
+	}
+
+	if (c_conn->connector_type == DRM_MODE_CONNECTOR_DSI) {
+		struct dsi_display *dsi_display = (struct dsi_display *)(c_conn->display);
+		if (dsi_display && dsi_display->panel && dsi_display->panel->esd_config.esd_err_irq_gpio > 0) {
+			panel_on = dsi_display->panel->panel_initialized;
+			err_irq_gpio_value = gpio_get_value(dsi_display->panel->esd_config.esd_err_irq_gpio);
+		}
+	}
+
+	if (panel_on && (c_conn->panel_dead == false) && err_irq_gpio_value == 0) {
+		SDE_ERROR("esd check irq report PANEL_DEAD conn_id: %d enc_id: %d, panel_status[%d]\n",
+		c_conn->base.base.id, c_conn->encoder->base.id, panel_on);
+		c_conn->panel_dead = true;
+		event.type = DRM_EVENT_PANEL_DEAD;
+		event.length = sizeof(bool);
+		msm_mode_object_event_notify(&c_conn->base.base,
+			c_conn->base.dev, &event, (u8 *)&c_conn->panel_dead);
+		sde_encoder_display_failure_notification(c_conn->encoder, false);
+	}
+	return IRQ_HANDLED;
+}
+#endif
+
 static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	bool skip_pre_kickoff)
 {
@@ -2278,6 +2325,23 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 				sizeof(dsi_display->panel->hdr_props),
 				CONNECTOR_PROP_HDR_INFO);
 		}
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+		/* register esd irq and enable it after panel enabled */
+		if (dsi_display && dsi_display->panel &&
+			dsi_display->panel->esd_config.esd_err_irq_gpio > 0) {
+			rc = request_threaded_irq(dsi_display->panel->esd_config.esd_err_irq,
+							NULL, esd_err_irq_handle,
+							dsi_display->panel->esd_config.esd_err_irq_flags,
+							"esd_err_irq", c_conn);
+			if (rc < 0) {
+				pr_err("%s: request irq %d failed\n", __func__, dsi_display->panel->esd_config.esd_err_irq);
+				dsi_display->panel->esd_config.esd_err_irq = 0;
+			} else {
+				pr_info("%s: Request esd irq succeed!\n", __func__);
+			}
+		}
+#endif
 	}
 
 	rc = sde_connector_get_info(&c_conn->base, &display_info);
