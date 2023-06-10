@@ -263,65 +263,6 @@ static ssize_t panel_info_show(struct device *device,
 
 	return written;
 }
-
-void drm_bridge_disp_param_set(struct drm_bridge *bridge, int cmd);
-static ssize_t disp_param_store(struct device *device,
-			   struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	int param;
-	struct drm_connector *connector = NULL;
-	struct drm_encoder *encoder = NULL;
-	struct drm_bridge *bridge = NULL;
-
-	if (!device)
-		return count;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return count;
-
-	encoder = connector->encoder;
-	if (!encoder)
-		return count;
-
-	bridge = encoder->bridge;
-	if (!bridge)
-		return count;
-
-	sscanf(buf, "0x%x", &param);
-
-	drm_bridge_disp_param_set(bridge, param);
-
-	return count;
-}
-
-ssize_t drm_bridge_disp_param_get(struct drm_bridge *bridge, char *pbuf);
-static ssize_t disp_param_show(struct device *device,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	ssize_t ret = 0;
-	struct drm_connector *connector = NULL;
-	struct drm_encoder *encoder = NULL;
-	struct drm_bridge *bridge = NULL;
-
-	connector = to_drm_connector(device);
-	if (!connector)
-		return ret;
-
-	encoder = connector->encoder;
-	if (!encoder)
-		return ret;
-
-	bridge = encoder->bridge;
-	if (!bridge)
-		return ret;
-
-	ret = drm_bridge_disp_param_get(bridge, buf);
-
-	return ret;
-}
 #endif
 
 static DEVICE_ATTR_RW(status);
@@ -330,7 +271,6 @@ static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 static DEVICE_ATTR_RO(panel_info);
-static DEVICE_ATTR_RW(disp_param);
 #endif
 
 static struct attribute *connector_dev_attrs[] = {
@@ -340,7 +280,6 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_modes.attr,
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	&dev_attr_panel_info.attr,
-	&dev_attr_disp_param.attr,
 #endif
 	NULL
 };

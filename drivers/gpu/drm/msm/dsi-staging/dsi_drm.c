@@ -30,7 +30,7 @@
 #include "sde_trace.h"
 #include "sde_encoder.h"
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-#include "dsi_defs.h"
+#include "dsi_panel.h"
 #endif
 
 #define to_dsi_bridge(x)     container_of((x), struct dsi_bridge, base)
@@ -360,56 +360,6 @@ int dsi_bridge_interface_enable(int timeout)
 	return ret;
 }
 EXPORT_SYMBOL(dsi_bridge_interface_enable);
-
-int panel_disp_param_send(struct dsi_display *display, int cmd);
-static void dsi_bridge_disp_param_set(struct drm_bridge *bridge, int cmd)
-{
-	int rc = 0;
-	struct dsi_bridge *c_bridge;
-
-	if (!bridge) {
-		pr_err("Invalid params\n");
-		return;
-	}
-
-	c_bridge = to_dsi_bridge(bridge);
-
-	rc = panel_disp_param_send(c_bridge->display, cmd);
-	if (rc) {
-		pr_err("[%d] DSI disp param send failed, rc=%d\n",
-		       c_bridge->id, rc);
-	}
-}
-
-static ssize_t dsi_bridge_disp_param_get(struct drm_bridge *bridge, char *buf)
-{
-	struct dsi_bridge *c_bridge;
-	struct dsi_display *display;
-	struct dsi_panel *panel;
-	ssize_t ret = 0;
-
-	if (!bridge) {
-		pr_err("Invalid params\n");
-		return 0;
-	} else {
-		c_bridge = to_dsi_bridge(bridge);
-		if (c_bridge == NULL)
-			return 0;
-
-		display = c_bridge->display;
-		if (display == NULL)
-			return 0;
-
-		panel = display->panel;
-		if (panel) {
-			ret = strlen(panel->panel_read_data);
-			ret = ret > 255 ? 255 : ret;
-			if (ret > 0)
-				memcpy(buf, panel->panel_read_data, ret);
-		}
-	}
-	return ret;
-}
 
 static int dsi_bridge_get_panel_info(struct drm_bridge *bridge, char *buf)
 {
@@ -785,8 +735,6 @@ static const struct drm_bridge_funcs dsi_bridge_ops = {
 	.post_disable = dsi_bridge_post_disable,
 	.mode_set     = dsi_bridge_mode_set,
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	.disp_param_set = dsi_bridge_disp_param_set,
-	.disp_param_get = dsi_bridge_disp_param_get,
 	.disp_get_panel_info = dsi_bridge_get_panel_info,
 #endif
 };
@@ -1207,11 +1155,6 @@ void dsi_conn_enable_event(struct drm_connector *connector,
 			event_idx, &event_info, enable);
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-extern void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
-			struct dsi_display_mode *adj_mode);
-#endif
-
 int dsi_conn_post_kickoff(struct drm_connector *connector,
 	struct msm_display_conn_params *params)
 {
@@ -1263,7 +1206,7 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 		if (adj_mode.timing.refresh_rate == 120)
-			dsi_display_panel_gamma_mode_change(display, &adj_mode);
+			dsi_panel_gamma_mode_change(display->panel, &adj_mode);
 #endif
 
 		c_bridge->dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_VRR;

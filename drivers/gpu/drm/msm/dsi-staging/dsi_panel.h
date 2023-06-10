@@ -38,10 +38,6 @@
 
 #define DSI_MODE_MAX 5
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#define BUF_LEN_MAX    256
-#endif
-
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
 	DSI_PANEL_ROTATE_HV_FLIP,
@@ -225,25 +221,12 @@ struct dsi_panel {
 	bool te_using_watchdog_timer;
 	u32 qsync_min_fps;
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	bool dispparam_enabled;
-#endif
-
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct delayed_work cmds_work;
-	/* DC bkl */
-	bool dc_enable;
-	u32 dc_threshold;
-
-	u8 panel_read_data[BUF_LEN_MAX];
-#endif
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -305,6 +288,11 @@ int dsi_panel_get_phy_props(struct dsi_panel *panel,
 			    struct dsi_panel_phy_props *phy_props);
 int dsi_panel_get_dfps_caps(struct dsi_panel *panel,
 			    struct dsi_dfps_capabilities *dfps_caps);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
+                        struct dsi_display_mode *adj_mode);
+#endif
 
 int dsi_panel_pre_prepare(struct dsi_panel *panel);
 

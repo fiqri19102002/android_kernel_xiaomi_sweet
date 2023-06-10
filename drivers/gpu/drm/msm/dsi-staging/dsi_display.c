@@ -37,14 +37,8 @@
 #include "sde_dbg.h"
 #include "dsi_parser.h"
 #include "dsi_phy.h"
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#include "dsi_panel_mi.h"
-#endif
 
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#define to_dsi_bridge(x) container_of((x), struct dsi_bridge, base)
-#endif
 #define INT_BASE_10 10
 #define NO_OVERRIDE -1
 
@@ -78,43 +72,6 @@ struct dsi_display *get_primary_display(void)
 	return primary_display;
 }
 EXPORT_SYMBOL(get_primary_display);
-
-void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
-			struct dsi_display_mode *adj_mode)
-{
-	u32 count = 0;
-	int rc = 0;
-	struct dsi_display_mode *cur_mode = NULL;
-
-	if (!display || !adj_mode || !display->panel) {
-		pr_err("Invalid params\n");
-		return;
-	}
-
-	cur_mode = display->panel->cur_mode;
-	if (!cur_mode) {
-		pr_err("Invalid params\n");
-		return;
-	}
-
-	count = display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
-	if (!count) {
-		pr_info("No need to change panel gamma\n");
-		return;
-	}
-
-	if (adj_mode->timing.refresh_rate == 120)
-		rc = panel_disp_param_send_lock(display->panel, DISPPARAM_BC_120HZ);
-	else if (adj_mode->timing.refresh_rate == 60)
-		rc = panel_disp_param_send_lock(display->panel, DISPPARAM_BC_60HZ);
-
-	if (rc)
-		pr_err("%s: send cmds failed...", __func__);
-	else
-		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
-
-	return;
-}
 #endif
 
 static void dsi_display_mask_ctrl_error_interrupts(struct dsi_display *display,
@@ -6774,9 +6731,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 {
 	int rc = 0;
 	struct dsi_display_mode adj_mode;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	struct dsi_mode_info timing;
-#endif
 
 	if (!display || !mode || !display->panel) {
 		pr_err("Invalid params\n");
@@ -6786,9 +6740,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 	mutex_lock(&display->display_lock);
 
 	adj_mode = *mode;
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	timing = adj_mode.timing;
-#endif
 	adjust_timing_by_ctrl_count(display, &adj_mode);
 
 	/*For dynamic DSI setting, use specified clock rate */
@@ -6809,7 +6760,7 @@ int dsi_display_set_mode(struct dsi_display *display,
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	if (adj_mode.timing.refresh_rate == 60)
-		dsi_display_panel_gamma_mode_change(display, &adj_mode);
+		dsi_panel_gamma_mode_change(display->panel, &adj_mode);
 #endif
 
 	if (!display->panel->cur_mode) {
@@ -7739,6 +7690,10 @@ int dsi_display_post_enable(struct dsi_display *display)
 	if (display->config.panel_mode == DSI_OP_CMD_MODE)
 		dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_ALL_CLKS, DSI_CLK_OFF);
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	dsi_panel_gamma_mode_change(display->panel, display->panel->cur_mode);
+#endif
 
 	mutex_unlock(&display->display_lock);
 	return rc;

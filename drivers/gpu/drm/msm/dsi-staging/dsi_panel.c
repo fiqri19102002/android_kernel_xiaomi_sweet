@@ -26,7 +26,6 @@
 #include "dsi_parser.h"
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 #include "dsi_display.h"
-#include "dsi_panel_mi.h"
 
 #include <drm/drm_notifier.h>
 #endif
@@ -50,12 +49,6 @@
 #define MAX_PANEL_JITTER		10
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define TICKS_IN_MICRO_SECOND		1000000
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-#define to_dsi_display(x) container_of(x, struct dsi_display, host)
-
-int panel_disp_param_send_lock(struct dsi_panel *panel, int param);
-#endif
 
 enum dsi_dsc_ratio_type {
 	DSC_8BPC_8BPP,
@@ -3353,59 +3346,6 @@ end:
 	utils->node = panel->panel_of_node;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-static void panelon_dimming_enable_delayed_work(struct work_struct *work)
-{
-	struct dsi_panel *panel = container_of(work,
-				struct dsi_panel, cmds_work.work);
-	struct dsi_display *display = NULL;
-	struct mipi_dsi_host *host = panel->host;
-
-	if (host)
-		display = container_of(host, struct dsi_display, host);
-
-	if (display) {
-		mutex_lock(&display->display_lock);
-		panel_disp_param_send_lock(panel, DISPPARAM_DIMMING);
-		mutex_unlock(&display->display_lock);
-	}
-}
-
-static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
-				     struct device_node *of_node)
-{
-	int rc = 0;
-	struct dsi_parser_utils *utils;
-
-	if (panel == NULL)
-		return -EINVAL;
-
-	utils = &panel->utils;
-
-	panel->dispparam_enabled = utils->read_bool(of_node, "qcom,dispparam-enabled");
-	if (panel->dispparam_enabled) {
-		pr_info("Dispparam enabled.\n");
-	} else {
-		pr_info("Dispparam disabled.\n");
-	}
-
-	INIT_DELAYED_WORK(&panel->cmds_work, panelon_dimming_enable_delayed_work);
-
-	rc = of_property_read_u32(of_node,
-			"qcom,mdss-dsi-panel-dc-threshold", &panel->dc_threshold);
-	if (rc) {
-		panel->dc_threshold = 440;
-		pr_info("default dc backlight threshold is %d\n", panel->dc_threshold);
-	} else {
-		pr_info("dc backlight threshold %d \n", panel->dc_threshold);
-	}
-
-	panel->dc_enable = false;
-
-	return rc;
-}
-#endif
-
 struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				struct device_node *parser_node,
@@ -3517,12 +3457,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 		pr_debug("failed to parse esd config, rc=%d\n", rc);
 
 	panel->power_mode = SDE_MODE_DPMS_OFF;
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-	rc = dsi_panel_parse_mi_config(panel, of_node);
-	if (rc)
-		pr_err("failed to parse mi config, rc=%d\n", rc);
-#endif
 
 	drm_panel_init(&panel->drm_panel);
 	mutex_init(&panel->panel_lock);
@@ -3643,6 +3577,41 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
+
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
+			struct dsi_display_mode *adj_mode)
+{
+	u32 count = 0;
+	int rc = 0;
+	struct dsi_display_mode *cur_mode = panel->cur_mode;
+
+	mutex_lock(&panel->panel_lock);
+	if (!panel->panel_initialized || !adj_mode || !cur_mode) {
+		pr_err("Invalid params\n");
+		goto exit;
+	}
+
+	count = cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
+	if (!count)
+		goto exit;
+
+	if (adj_mode->timing.refresh_rate == 120)
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
+	else if (adj_mode->timing.refresh_rate == 60)
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
+
+	if (rc)
+		pr_err("%s: send cmds failed...", __func__);
+	else
+		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
+
+exit:
+	mutex_unlock(&panel->panel_lock);
+
+	return;
+}
+#endif
 
 int dsi_panel_validate_mode(struct dsi_panel *panel,
 			    struct dsi_display_mode *mode)
@@ -4301,385 +4270,6 @@ int dsi_panel_send_roi_dcs(struct dsi_panel *panel, int ctrl_idx,
 	return rc;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-extern bool g_idleflag;
-int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
-{
-	int rc = 0;
-	uint32_t temp = 0;
-	struct dsi_cmd_desc *cmds = NULL;
-	struct dsi_display_mode_priv_info *priv_info;
-	u32 count;
-	u8 *tx_buf;
-
-	mutex_lock(&panel->panel_lock);
-
-	pr_info("[LCD] param_type = 0x%x\n", param);
-
-	if (!panel->panel_initialized) {
-		pr_err("[LCD] panel not ready!\n");
-		mutex_unlock(&panel->panel_lock);
-		return rc;
-	}
-
-	priv_info = panel->cur_mode->priv_info;
-
-	if ((param & 0x00F00000) == 0xD00000)
-		param = (param & 0x0FF00000);
-
-	temp = param & 0x0000000F;
-	switch (temp) {
-	case DISPPARAM_WARM:
-		pr_info("warm\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DEFAULT:
-		pr_info("normal\n");
-		/* no-op */
-		break;
-	case DISPPARAM_COLD:
-		pr_info("cold\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE8:
-		pr_info("paper mode\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE1:
-		pr_info("paper mode 1\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE2:
-		pr_info("paper mode 2\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE3:
-		pr_info("paper mode 3\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE4:
-		pr_info("paper mode 4\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE5:
-		pr_info("paper mode 5\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE6:
-		pr_info("paper mode 6\n");
-		/* no-op */
-		break;
-	case DISPPARAM_PAPERMODE7:
-		pr_info("paper mode 7\n");
-		/* no-op */
-		break;
-	case DISPPARAM_WHITEPOINT_XY:
-		pr_info("read xy coordinate\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x000000F0;
-	switch (temp) {
-	case DISPPARAM_CE_ON:
-		pr_info("ceon\n");
-		/* no-op */
-		break;
-	case DISPPARAM_CE_OFF:
-		pr_info("ceoff\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x00000F00;
-	switch (temp) {
-	case DISPPARAM_CABCUI_ON:
-		pr_info("cabcuion\n");
-		/* no-op */
-		break;
-	case DISPPARAM_CABCSTILL_ON:
-		pr_info("cabcstillon\n");
-		/* no-op */
-		break;
-	case DISPPARAM_CABCMOVIE_ON:
-		pr_info("cabcmovieon\n");
-		/* no-op */
-		break;
-	case DISPPARAM_CABC_OFF:
-		pr_info("cabcoff\n");
-		/* no-op */
-		break;
-	case DISPPARAM_SKIN_CE_CABCUI_ON:
-		pr_info("skince cabcuion\n");
-		/* no-op */
-		break;
-	case DISPPARAM_SKIN_CE_CABCSTILL_ON:
-		pr_info("skince cabcstillon\n");
-		/* no-op */
-		break;
-	case DISPPARAM_SKIN_CE_CABCMOVIE_ON:
-		pr_info("skince cabcmovieon\n");
-		/* no-op */
-		break;
-	case DISPPARAM_SKIN_CE_CABC_OFF:
-		pr_info("skince cabcoff\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DIMMING_OFF:
-		pr_info("dimmingoff\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
-		break;
-	case DISPPARAM_DIMMING:
-		pr_info("dimmingon\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x0000F000;
-	switch (temp) {
-	case DISPPARAM_ACL_L1:
-		pr_info("acl level 1\n");
-		/* no-op */
-		break;
-	case DISPPARAM_ACL_L2:
-		pr_info("acl level 2\n");
-		/* no-op */
-		break;
-	case DISPPARAM_ACL_L3:
-		pr_info("acl level 3\n");
-		/* no-op */
-		break;
-	case DISPPARAM_ACL_OFF:
-		pr_info("acl off\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x000F0000;
-	switch (temp) {
-	case DISPPARAM_LCD_HBM_L1_ON:
-		pr_info("lcd hbm l1 on\n");
-		/* no-op */
-		break;
-	case DISPPARAM_LCD_HBM_L2_ON:
-		pr_info("lcd hbm  l2 on\n");
-		/* no-op */
-		break;
-	case DISPPARAM_LCD_HBM_OFF:
-		pr_info("lcd hbm off\n");
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_ON:
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_FOD_ON:
-		pr_info("hbm fod on\n");
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_FOD2NORM:
-		pr_info("hbm fod to normal mode\n");
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_FOD_OFF:
-		pr_info("hbm fod off\n");
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_OFF:
-		pr_info("hbm off\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DC_ON:
-		pr_info("DC on\n");
-		panel->dc_enable = true;
-		break;
-	case DISPPARAM_DC_OFF:
-		pr_info("DC off\n");
-		panel->dc_enable = false;
-		break;
-	case DISPPARAM_BC_120HZ:
-		pr_info("BC 120hz\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
-		break;
-	case DISPPARAM_BC_60HZ:
-		pr_info("BC 60hz\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x00F00000;
-	switch (temp) {
-	case DISPPARAM_NORMALMODE1:
-		pr_info("normal mode1\n");
-		/* no-op */
-		break;
-	case DISPPARAM_P3:
-		pr_info("dci p3 mode\n");
-		/* no-op */
-		break;
-	case DISPPARAM_SRGB:
-		pr_info("sRGB\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DOZE_BRIGHTNESS_HBM:
-		pr_info("doze hbm On\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DOZE_BRIGHTNESS_LBM:
-		pr_info("doze lbm On\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DOZE_OFF:
-		pr_info("doze Off\n");
-		/* no-op */
-		break;
-	case DISPPARAM_FOD_BACKLIGHT:
-		pr_info("FOD backlight");
-		/* no-op */
-		break;
-	case DISPPARAM_HBM_BACKLIGHT_RESEND:
-		/* no-op */
-		break;
-	case DISPPARAM_CRC_OFF:
-		pr_info("crc off\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0x0F000000;
-	switch (temp) {
-	case DISPPARAM_FOD_BACKLIGHT_ON:
-		/* no-op */
-		break;
-	case DISPPARAM_FOD_BACKLIGHT_OFF:
-		/* no-op */
-		break;
-	case DISPPARAM_ELVSS_DIMMING_ON:
-		pr_info("elvss dimming on\n");
-		/* no-op */
-		break;
-	case DISPPARAM_ELVSS_DIMMING_OFF:
-		pr_info("elvss dimming off\n");
-		/* no-op */
-		break;
-	case DISPPARAM_FLAT_MODE_ON:
-		pr_info("flat mode on\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_ON);
-		break;
-	case DISPPARAM_FLAT_MODE_OFF:
-		pr_info("flat mode off\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_FLAT_MODE_OFF);
-		break;
-	case DISPPARAM_DEMURA_LEVEL02:
-		pr_info("DEMURA LEVEL 02\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DEMURA_LEVEL08:
-		pr_info("DEMURA LEVEL 08\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DEMURA_LEVEL0D:
-		pr_info("DEMURA LEVEL 0D\n");
-		/* no-op */
-		break;
-	case DISPPARAM_IDLE_ON:
-		pr_info("idle on\n");
-		g_idleflag = true;
-		break;
-	case DISPPARAM_IDLE_OFF:
-		pr_info("idle off\n");
-		g_idleflag = false;
-		break;
-	case DISPPARAM_ONE_PLUSE:
-		pr_info("ONE PLUSE\n");
-		/* no-op */
-		break;
-	case DISPPARAM_FOUR_PLUSE:
-		pr_info("FOUR PLUSE\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	temp = param & 0xF0000000;
-	switch (temp) {
-	case DISPPARAM_DFPS_LEVEL1:
-		pr_info("DFPS:30fps\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DFPS_LEVEL2:
-		pr_info("DFPS:45fps\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DFPS_LEVEL3:
-		pr_info("DFPS:60fps\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DFPS_LEVEL4:
-		pr_info("DFPS:90fps\n");
-		/* no-op */
-		break;
-	case DISPPARAM_DFPS_LEVEL5:
-		pr_info("DFPS:120fps\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_30HZ:
-		pr_info("QSYNC:30HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_40HZ:
-		pr_info("QSYNC:40HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_50HZ:
-		pr_info("QSYNC:50HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_60HZ:
-		pr_info("QSYNC:60HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_70HZ:
-		pr_info("QSYNC:70HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_80HZ:
-		pr_info("QSYNC:80HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_90HZ:
-		pr_info("QSYNC:90HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_100HZ:
-		pr_info("QSYNC:100HZ\n");
-		/* no-op */
-		break;
-	case DISPPARAM_QSYNC_MIN_FPS_110HZ:
-		pr_info("QSYNC:110HZ\n");
-		/* no-op */
-		break;
-	default:
-		break;
-	}
-
-	mutex_unlock(&panel->panel_lock);
-	return rc;
-}
-#endif
-
 int dsi_panel_pre_mode_switch_to_video(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4716,29 +4306,6 @@ int dsi_panel_pre_mode_switch_to_cmd(struct dsi_panel *panel)
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-int panel_disp_param_send(struct dsi_display *display, int param_type)
-{
-	int rc = 0;
-	struct dsi_panel *panel = NULL;
-	struct drm_device *drm_dev = NULL;
-
-	if (!display || !display->panel || !display->drm_dev) {
-		pr_err("invalid display/panel/drm_dev\n");
-		return -EINVAL;
-	}
-
-	panel = display->panel;
-	drm_dev = display->drm_dev;
-
-	if (!panel->dispparam_enabled)
-		return rc;
-
-	rc = panel_disp_param_send_lock(panel, param_type);
-	return rc;
-}
-#endif
 
 int dsi_panel_mode_switch_to_cmd(struct dsi_panel *panel)
 {
