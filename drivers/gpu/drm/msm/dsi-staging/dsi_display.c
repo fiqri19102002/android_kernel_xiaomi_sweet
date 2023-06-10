@@ -299,61 +299,6 @@ error:
 	return rc;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-/* thermal_hbm_disabled */
-int dsi_display_set_thermal_hbm_disabled(struct drm_connector *connector,
-			bool thermal_hbm_disabled)
-{
-	struct sde_connector *c_conn = NULL;
-	struct dsi_display *display = NULL;
-
-	if (!connector) {
-		pr_err("invalid argument\n");
-		return -EINVAL;
-	}
-
-	c_conn = to_sde_connector(connector);
-	if (!c_conn->display) {
-		pr_err("invalid connector display\n");
-		return -EINVAL;
-	}
-
-	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
-		pr_err("unsupported connector (%s)\n", connector->name);
-		return -EINVAL;
-	}
-
-	display = (struct dsi_display *)c_conn->display;
-	return dsi_panel_set_thermal_hbm_disabled(display->panel, thermal_hbm_disabled);
-}
-
-int dsi_display_get_thermal_hbm_disabled(struct drm_connector *connector,
-			bool *thermal_hbm_disabled)
-{
-	struct sde_connector *c_conn = NULL;
-	struct dsi_display *display = NULL;
-
-	if (!connector) {
-		pr_err("invalid argument\n");
-		return -EINVAL;
-	}
-
-	c_conn = to_sde_connector(connector);
-	if (!c_conn->display) {
-		pr_err("invalid connector display\n");
-		return -EINVAL;
-	}
-
-	if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
-		pr_err("unsupported connector (%s)\n", connector->name);
-		return -EINVAL;
-	}
-
-	display = (struct dsi_display *)c_conn->display;
-	return dsi_panel_get_thermal_hbm_disabled(display->panel, thermal_hbm_disabled);
-}
-#endif
-
 int dsi_display_cmd_engine_enable(struct dsi_display *display)
 {
 	int rc = 0;
@@ -1202,8 +1147,6 @@ int dsi_display_set_power(struct drm_connector *connector,
 #endif
 		rc = dsi_panel_set_lp1(display->panel);
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-		if (!rc)
-			dsi_panel_set_doze_backlight(display);
 		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
 #endif
 		break;

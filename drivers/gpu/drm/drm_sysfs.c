@@ -264,47 +264,6 @@ static ssize_t panel_info_show(struct device *device,
 	return written;
 }
 
-int dsi_bridge_disp_set_doze_backlight(struct drm_connector *connector,
-			int doze_backlight);
-ssize_t dsi_bridge_disp_get_doze_backlight(struct drm_connector *connector,
-			char *buf);
-
-static ssize_t doze_brightness_show(struct device *device,
-			    struct device_attribute *attr,
-			   char *buf)
-{
-	struct drm_connector *connector = to_drm_connector(device);
-	struct drm_device *dev = connector->dev;
-
-	return snprintf(buf, PAGE_SIZE, "%d\n",
-			dev->doze_brightness);
-}
-
-static ssize_t doze_backlight_store(struct device *device,
-			   struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct drm_connector *connector = to_drm_connector(device);
-	int doze_backlight;
-	int ret;
-
-	ret = kstrtoint(buf, 0, &doze_backlight);
-	if (ret)
-		return ret;
-
-	ret = dsi_bridge_disp_set_doze_backlight(connector, doze_backlight);
-
-	return ret ? ret : count;
-}
-
-static ssize_t doze_backlight_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_connector *connector = to_drm_connector(dev);
-
-	return dsi_bridge_disp_get_doze_backlight(connector, buf);
-}
-
 void drm_bridge_disp_param_set(struct drm_bridge *bridge, int cmd);
 static ssize_t disp_param_store(struct device *device,
 			   struct device_attribute *attr,
@@ -363,53 +322,6 @@ static ssize_t disp_param_show(struct device *device,
 
 	return ret;
 }
-
-static ssize_t thermal_hbm_disabled_store(struct device *device,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct drm_connector *connector = to_drm_connector(device);
-	char *input_copy, *input_dup = NULL;
-	bool thermal_hbm_disabled;
-	int ret;
-
-	input_copy = kstrdup(buf, GFP_KERNEL);
-	if (!input_copy) {
-		DRM_ERROR("can not allocate memory\n");
-		ret = -ENOMEM;
-		goto exit;
-	}
-	input_dup = input_copy;
-
-	/* removes leading and trailing whitespace from input_copy */
-	input_copy = strim(input_copy);
-	ret = kstrtobool(input_copy, &thermal_hbm_disabled);
-	if (ret) {
-		DRM_ERROR("input buffer conversion failed\n");
-		ret = -EAGAIN;
-		goto exit_free;
-	}
-
-	DRM_INFO("set thermal_hbm_disabled %d\n", thermal_hbm_disabled);
-	ret = dsi_display_set_thermal_hbm_disabled(connector, thermal_hbm_disabled);
-
-exit_free:
-	kfree(input_dup);
-exit:
-	return ret ? ret : count;
-}
-
-static ssize_t thermal_hbm_disabled_show(struct device *device,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	struct drm_connector *connector = to_drm_connector(device);
-	bool thermal_hbm_disabled;
-
-	dsi_display_get_thermal_hbm_disabled(connector, &thermal_hbm_disabled);
-
-	return snprintf(buf, PAGE_SIZE, "%d\n", thermal_hbm_disabled);
-}
 #endif
 
 static DEVICE_ATTR_RW(status);
@@ -417,11 +329,8 @@ static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-static DEVICE_ATTR_RW(thermal_hbm_disabled);
 static DEVICE_ATTR_RO(panel_info);
 static DEVICE_ATTR_RW(disp_param);
-static DEVICE_ATTR_RO(doze_brightness);
-static DEVICE_ATTR_RW(doze_backlight);
 #endif
 
 static struct attribute *connector_dev_attrs[] = {
@@ -432,9 +341,6 @@ static struct attribute *connector_dev_attrs[] = {
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	&dev_attr_panel_info.attr,
 	&dev_attr_disp_param.attr,
-	&dev_attr_doze_brightness.attr,
-	&dev_attr_doze_backlight.attr,
-	&dev_attr_thermal_hbm_disabled.attr,
 #endif
 	NULL
 };

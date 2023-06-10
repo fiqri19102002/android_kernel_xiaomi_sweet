@@ -182,10 +182,4 @@ int dsi_display_disp_param_get(struct drm_connector *connector,
 				     u32 *param_type);
 int dsi_display_disp_param_set(struct drm_connector *connector,
 				     u32 param_type);
-
-/* thermal_hbm_disabled */
-int dsi_display_get_thermal_hbm_disabled(struct drm_connector *connector,
-					     bool *thermal_hbm_disabled);
-int dsi_display_set_thermal_hbm_disabled(struct drm_connector *connector,
-					     bool thermal_hbm_disabled);
 #endif

@@ -227,7 +227,6 @@ struct dsi_panel {
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	bool dispparam_enabled;
-	u32 skip_dimmingon;
 #endif
 
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
@@ -239,27 +238,11 @@ struct dsi_panel {
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	struct delayed_work cmds_work;
-	struct delayed_work nolp_bl_delay_work;
-	u32 last_bl_lvl;
-	u32 backlight_pulse_threshold;
 	/* DC bkl */
 	bool dc_enable;
 	u32 dc_threshold;
 
-	bool hbm_enabled;
-	bool thermal_hbm_disabled;
-	u32 hbm_brightness;
-	u32 doze_backlight_threshold;
-	bool f4_51_ctrl_flag; /* For the f4_36 panel */
-	u32 hbm_off_51_index;
-
 	u8 panel_read_data[BUF_LEN_MAX];
-
-	bool in_aod; /* set  DISPPARAM_DOZE_BRIGHTNESS_HBM/LBM only in AOD */
-	int doze_brightness;
-
-	int doze_lbm_brightness;
-	int doze_hbm_brightness;
 #endif
 };
 
@@ -380,18 +363,5 @@ struct dsi_panel *dsi_panel_ext_bridge_get(struct device *parent,
 int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel);
 
 void dsi_panel_ext_bridge_put(struct dsi_panel *panel);
-
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-int dsi_panel_write_cmd_set(struct dsi_panel *panel,
-				struct dsi_panel_cmd_set *cmd_sets);
-
-int dsi_panel_read_cmd_set(struct dsi_panel *panel,
-				struct dsi_read_config *read_config);
-
-int dsi_panel_set_thermal_hbm_disabled(struct dsi_panel *panel,
-				bool thermal_hbm_disabled);
-int dsi_panel_get_thermal_hbm_disabled(struct dsi_panel *panel,
-				bool *thermal_hbm_disabled);
-#endif
 
 #endif /* _DSI_PANEL_H_ */
