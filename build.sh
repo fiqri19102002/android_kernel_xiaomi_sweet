@@ -243,15 +243,11 @@ gen_zip() {
 }
 
 clone
+setup_ksu
 cfg_changes
 if [ $LOCALBUILD == "0" ]; then
 	send_tg_msg
 fi
-compile
-set_naming
-gen_zip
-setup_ksu
-cfg_changes
 compile
 set_naming
 gen_zip
