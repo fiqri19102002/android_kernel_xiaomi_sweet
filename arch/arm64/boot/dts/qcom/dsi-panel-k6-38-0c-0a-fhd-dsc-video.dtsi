@@ -126,6 +126,18 @@
 				qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
 				qcom,mdss-dsi-dispparam-dimmingoff-command = [39 01 00 00 01 00 02 53 20];
 				qcom,mdss-dsi-dispparam-dimmingoff-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-dispparam-hbm-on-command = [
+					39 01 00 00 00 00 02 53 E8
+					/* Enter HBM Mode */
+					39 01 00 00 00 00 03 51 07 FF
+					39 01 00 00 00 00 02 F7 0B
+					];
+				qcom,mdss-dsi-dispparam-hbm-on-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-dispparam-hbm-off-command = [
+					/* Exit HBM Mode */
+					39 00 00 00 00 00 02 53 28
+					39 01 00 00 00 00 03 51 07 FF];
+				qcom,mdss-dsi-dispparam-hbm-off-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-doze-hbm-command = [39 01 00 00 00 00 03 51 01 10];
 				qcom,mdss-dsi-doze-hbm-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-doze-lbm-command = [39 01 00 00 00 00 03 51 00 16];
