@@ -126,6 +126,18 @@
 				qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
 				qcom,mdss-dsi-dispparam-dimmingoff-command = [39 01 00 00 01 00 02 53 20];
 				qcom,mdss-dsi-dispparam-dimmingoff-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-dispparam-hbm-on-command = [
+					39 01 00 00 00 00 02 53 E8
+					/* Enter HBM Mode */
+					39 01 00 00 00 00 03 51 07 FF
+					39 01 00 00 00 00 02 F7 0B
+					];
+				qcom,mdss-dsi-dispparam-hbm-on-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-dispparam-hbm-off-command = [
+					/* Exit HBM Mode */
+					39 00 00 00 00 00 02 53 28
+					39 01 00 00 00 00 03 51 07 FF];
+				qcom,mdss-dsi-dispparam-hbm-off-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-dispparam-bc-120hz-command = [
 					/* Brightness Control - Freq Setting */
 					39 00 00 00 00 00 03 F0 5A 5A
