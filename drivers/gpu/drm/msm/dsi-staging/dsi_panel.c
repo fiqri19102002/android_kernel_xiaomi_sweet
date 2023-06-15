@@ -706,7 +706,7 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (0 == bl_lvl) {
+	if (0 == bl_lvl && !ea_panel_is_enabled()) {
 		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
 	}
 #endif

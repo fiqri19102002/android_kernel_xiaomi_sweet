@@ -25,6 +25,8 @@
 #include "sde_crtc.h"
 #include "sde_rm.h"
 
+#include "../dsi-staging/exposure_adjustment.h"
+
 #define BL_NODE_NAME_SIZE 32
 
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
@@ -94,7 +96,8 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		bl_lvl = 1;
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
-	if (bl_lvl && bl_lvl < display->panel->bl_config.bl_min_level)
+	if (bl_lvl && bl_lvl < display->panel->bl_config.bl_min_level &&
+		!ea_panel_is_enabled())
 		bl_lvl = display->panel->bl_config.bl_min_level;
 #endif
 
