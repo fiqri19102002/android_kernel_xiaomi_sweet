@@ -1173,23 +1173,25 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 #endif
 
 	/* inform external module */
-	mutex_lock(&goodix_modules.mutex);
-	list_for_each_entry_safe(ext_module, next,
-				&goodix_modules.head, list) {
-		if (!ext_module->funcs->irq_event)
-			continue;
-		r = ext_module->funcs->irq_event(core_data, ext_module);
-		if (r == EVT_CANCEL_IRQEVT) {
-			mutex_unlock(&goodix_modules.mutex);
-			return IRQ_HANDLED;
+	if (atomic_read(&core_data->suspended)) {
+		mutex_lock(&goodix_modules.mutex);
+		list_for_each_entry_safe(ext_module, next,
+					&goodix_modules.head, list) {
+			if (!ext_module->funcs->irq_event)
+				continue;
+			r = ext_module->funcs->irq_event(core_data, ext_module);
+			if (r == EVT_CANCEL_IRQEVT) {
+				mutex_unlock(&goodix_modules.mutex);
+				return IRQ_HANDLED;
+			}
 		}
+		mutex_unlock(&goodix_modules.mutex);
 	}
-	mutex_unlock(&goodix_modules.mutex);
 
 	/* read touch data from touch device */
 	r = ts_dev->hw_ops->event_handler(ts_dev, ts_event);
 	if (likely(r >= 0)) {
-		if (ts_event->event_type == EVENT_TOUCH) {
+		if (likely(ts_event->event_type == EVENT_TOUCH)) {
 			/* report touch */
 			goodix_ts_report_finger(core_data->input_dev,
 					&ts_event->touch_data);

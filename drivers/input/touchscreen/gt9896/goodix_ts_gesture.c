@@ -318,9 +318,6 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	u8 temp_data[GSX_MAX_KEY_DATA_LEN];
 	struct goodix_ts_device *ts_dev = core_data->ts_dev;
 
-	if (atomic_read(&core_data->suspended) == 0)
-		return EVT_CONTINUE;
-
 	if (!ts_dev->reg.gesture) {
 		ts_err("gesture reg can't be null");
 		return EVT_CONTINUE;
