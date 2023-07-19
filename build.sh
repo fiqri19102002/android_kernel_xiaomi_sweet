@@ -94,7 +94,9 @@ tg_post_build() {
 # Set funcrtion for setup KernelSU
 setup_ksu() {
 	curl -kLSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-	git apply KernelSU-hook.patch
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		git apply KernelSU-hook.patch
+	fi
 }
 
 # Set function for defconfig changes
