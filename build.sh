@@ -93,7 +93,7 @@ tg_post_build() {
 
 # Set funcrtion for setup KernelSU
 setup_ksu() {
-	curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+	curl -kLSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 	git apply KernelSU-hook.patch
 }
 
