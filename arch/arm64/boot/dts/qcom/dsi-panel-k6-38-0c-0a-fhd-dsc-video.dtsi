@@ -126,6 +126,10 @@
 				qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
 				qcom,mdss-dsi-dispparam-dimmingoff-command = [39 01 00 00 01 00 02 53 20];
 				qcom,mdss-dsi-dispparam-dimmingoff-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-doze-hbm-command = [39 01 00 00 00 00 03 51 01 10];
+				qcom,mdss-dsi-doze-hbm-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-doze-lbm-command = [39 01 00 00 00 00 03 51 00 16];
+				qcom,mdss-dsi-doze-lbm-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-dispparam-bc-120hz-command = [
 					/* Brightness Control - Freq Setting */
 					39 00 00 00 00 00 03 F0 5A 5A
