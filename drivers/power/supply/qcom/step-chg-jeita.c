@@ -1336,8 +1336,9 @@ int qcom_step_chg_init(struct device *dev,
 	chip->jeita_fv_config->param.prop_name = "BATT_TEMP";
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	chip->jeita_fv_config->param.hysteresis = 5;
-#endif
+#else
 	chip->jeita_fv_config->param.hysteresis = 10;
+#endif
 
 #ifdef CONFIG_MACH_XIAOMI_SWEET
 	chip->dynamic_fv_config->prop_name = "BATT_CYCLE_COUNT";
