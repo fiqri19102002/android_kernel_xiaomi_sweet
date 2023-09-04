@@ -1,5 +1,6 @@
 /* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -212,6 +213,8 @@ static int cam_icp_probe(struct platform_device *pdev)
 
 	g_icp_dev.open_cnt = 0;
 	mutex_init(&g_icp_dev.icp_lock);
+
+	cam_smmu_mi_init(iommu_hdl);
 
 	CAM_DBG(CAM_ICP, "ICP probe complete");
 
