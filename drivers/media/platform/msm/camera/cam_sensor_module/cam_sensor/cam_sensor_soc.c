@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -224,6 +225,12 @@ static int32_t cam_sensor_driver_get_dt_data(struct cam_sensor_ctrl_t *s_ctrl)
 		&sensordata->pos_yaw) < 0) {
 		CAM_DBG(CAM_SENSOR, "Invalid sensor position");
 		sensordata->pos_yaw = 360;
+	}
+
+	if (of_property_read_u32(of_node, "is-mipi-switch",
+		&s_ctrl->is_mipi_switch) < 0) {
+		CAM_DBG(CAM_SENSOR, "Invalid flag of is-mipi-switch");
+		s_ctrl->is_mipi_switch = 0;
 	}
 
 	return rc;
