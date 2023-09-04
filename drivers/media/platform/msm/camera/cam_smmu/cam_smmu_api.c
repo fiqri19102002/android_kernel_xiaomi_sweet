@@ -1,4 +1,5 @@
 /* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -40,6 +41,7 @@
 
 #define GET_SMMU_HDL(x, y) (((x) << COOKIE_SIZE) | ((y) & COOKIE_MASK))
 #define GET_SMMU_TABLE_IDX(x) (((x) >> COOKIE_SIZE) & COOKIE_MASK)
+extern int iommu_dma_set(struct device *dev, const char *name, bool best_fit);
 
 static int g_num_pf_handled = 4;
 module_param(g_num_pf_handled, int, 0644);
@@ -712,6 +714,11 @@ static int cam_smmu_create_add_handle_in_table(char *name,
 		if (!strcmp(iommu_cb_set.cb_info[i].name, name)) {
 			mutex_lock(&iommu_cb_set.cb_info[i].lock);
 			if (iommu_cb_set.cb_info[i].handle != HANDLE_INIT) {
+				CAM_ERR(CAM_SMMU,
+					"Error: %s already got handle 0x%x",
+					name,
+					iommu_cb_set.cb_info[i].handle);
+
 				if (iommu_cb_set.cb_info[i].is_secure)
 					iommu_cb_set.cb_info[i].secure_count++;
 
@@ -720,11 +727,6 @@ static int cam_smmu_create_add_handle_in_table(char *name,
 					*hdl = iommu_cb_set.cb_info[i].handle;
 					return 0;
 				}
-
-				CAM_ERR(CAM_SMMU,
-					"Error: %s already got handle 0x%x",
-					name, iommu_cb_set.cb_info[i].handle);
-
 				return -EINVAL;
 			}
 
@@ -1758,7 +1760,8 @@ static int cam_smmu_map_buffer_validate(struct dma_buf *buf,
 		table = dma_buf_map_attachment(attach, dma_dir);
 		if (IS_ERR_OR_NULL(table)) {
 			rc = PTR_ERR(table);
-			CAM_ERR(CAM_SMMU, "Error: dma map attachment failed");
+			CAM_ERR(CAM_SMMU, "Error: dma map attachment failed,idx=%d,sz=%zu",
+				idx, buf->size);
 			goto err_detach;
 		}
 
@@ -2042,6 +2045,41 @@ int cam_smmu_get_handle(char *identifier, int *handle_ptr)
 	return ret;
 }
 EXPORT_SYMBOL(cam_smmu_get_handle);
+
+int cam_smmu_mi_init(int handle)
+{
+	int ret = 0, idx;
+	struct cam_context_bank_info *cb;
+
+	if (handle == HANDLE_INIT) {
+		CAM_ERR(CAM_SMMU, "Error: Invalid handle");
+		return -EINVAL;
+	}
+
+	idx = GET_SMMU_TABLE_IDX(handle);
+	if (idx < 0 || idx >= iommu_cb_set.cb_num) {
+		CAM_ERR(CAM_SMMU, "Error: Index invalid. idx = %d hdl = %x",
+			idx, handle);
+		return -EINVAL;
+	}
+
+	mutex_lock(&iommu_cb_set.cb_info[idx].lock);
+	if (iommu_cb_set.cb_info[idx].handle != handle) {
+		CAM_ERR(CAM_SMMU,
+			"Error: hdl is not valid, table_hdl = %x, hdl = %x",
+			iommu_cb_set.cb_info[idx].handle, handle);
+		mutex_unlock(&iommu_cb_set.cb_info[idx].lock);
+		return -EINVAL;
+	}
+
+	cb = &iommu_cb_set.cb_info[idx];
+	iommu_dma_set(cb->dev, cb->name, true);
+
+	mutex_unlock(&iommu_cb_set.cb_info[idx].lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(cam_smmu_mi_init);
 
 int cam_smmu_ops(int handle, enum cam_smmu_ops_param ops)
 {
@@ -3179,6 +3217,7 @@ static int cam_smmu_setup_cb(struct cam_context_bank_info *cb,
 	struct device *dev)
 {
 	int rc = 0;
+	int32_t stall_disable = 1;
 
 	if (!cb || !dev) {
 		CAM_ERR(CAM_SMMU, "Error: invalid input params");
@@ -3244,6 +3283,13 @@ static int cam_smmu_setup_cb(struct cam_context_bank_info *cb,
 			&iommu_cb_set.non_fatal_fault) < 0) {
 			CAM_ERR(CAM_SMMU,
 				"Error: failed to set non fatal fault attribute");
+		}
+
+		if (iommu_domain_set_attr(cb->mapping->domain,
+			DOMAIN_ATTR_CB_STALL_DISABLE,
+			&stall_disable) < 0) {
+			CAM_ERR(CAM_SMMU,
+				"Error: failed to set cb stall disable");
 		}
 
 	} else {

@@ -1,5 +1,6 @@
 /* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -390,6 +391,32 @@ irqreturn_t cam_csiphy_irq(int irq_num, void *data)
 	return IRQ_HANDLED;
 }
 
+void cam_csiphy_config_cdr(struct csiphy_device *csiphy_dev)
+{
+	uint32_t     data0 = 0, data1 = 0;
+	uint32_t     cdr_config = 0;
+	void __iomem *mem_base0;
+	void __iomem *mem_base1;
+	void __iomem *csiphybase;
+
+	mem_base0 = ioremap(0x007801a0, 4);
+	mem_base1 = ioremap(0x007801a4, 4);
+
+	csiphybase = csiphy_dev->soc_info.reg_map[0].mem_base;
+
+	data0 = cam_io_r_mb(mem_base0);
+	data1 = cam_io_r_mb(mem_base1);
+
+	if (data0 == 0x12468410 && data1 == 0x08502007)
+		cdr_config = 0x2;
+	else
+		cdr_config = 0x1;
+	CAM_DBG(CAM_CSIPHY, "override cdr to 0x%x", cdr_config);
+	cam_io_w_mb(cdr_config, csiphybase + 0x9B0);
+	cam_io_w_mb(cdr_config, csiphybase + 0xAB0);
+	cam_io_w_mb(cdr_config, csiphybase + 0xBB0);
+}
+
 int32_t cam_csiphy_config_dev(struct csiphy_device *csiphy_dev)
 {
 	int32_t      rc = 0;
@@ -547,8 +574,10 @@ int32_t cam_csiphy_config_dev(struct csiphy_device *csiphy_dev)
 		lane_pos++;
 	}
 
-	if (csiphy_dev->csiphy_info.csiphy_3phase)
+	if (csiphy_dev->csiphy_info.csiphy_3phase) {
+		cam_csiphy_config_cdr(csiphy_dev);
 		cam_csiphy_cphy_data_rate_config(csiphy_dev);
+	}
 
 	cam_csiphy_cphy_irq_config(csiphy_dev);
 
@@ -613,6 +642,9 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 	csiphy_dev->csiphy_info.lane_mask = 0;
 	csiphy_dev->csiphy_info.lane_cnt = 0;
 	csiphy_dev->csiphy_info.combo_mode = 0;
+
+	if (csiphy_dev->is_acquired_dev_mipi_switch == 1)
+		csiphy_dev->is_acquired_dev_mipi_switch = 0;
 }
 
 static int32_t cam_csiphy_external_cmd(struct csiphy_device *csiphy_dev,
@@ -698,6 +730,7 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		}
 
 		csiphy_acq_params.combo_mode = 0;
+		csiphy_acq_params.reserved = 0;
 
 		if (copy_from_user(&csiphy_acq_params,
 			u64_to_user_ptr(csiphy_acq_dev.info_handle),
@@ -726,7 +759,8 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		if ((csiphy_acq_params.combo_mode != 1) &&
 			(csiphy_dev->is_acquired_dev_combo_mode != 1) &&
-			(csiphy_dev->acquire_count == 1)) {
+			(csiphy_dev->acquire_count == 1) &&
+			(csiphy_acq_params.reserved != 1)) {
 			CAM_ERR(CAM_CSIPHY,
 				"Multiple Acquires are not allowed cm: %d acm: %d",
 				csiphy_acq_params.combo_mode,
@@ -774,6 +808,10 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		csiphy_dev->acquire_count++;
 		csiphy_dev->csiphy_state = CAM_CSIPHY_ACQUIRE;
+
+		if (csiphy_acq_params.reserved == 1 &&
+			csiphy_dev->is_acquired_dev_mipi_switch != 1)
+			csiphy_dev->is_acquired_dev_mipi_switch = 1;
 	}
 		break;
 	case CAM_QUERY_CAP: {
@@ -808,6 +846,10 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		offset = cam_csiphy_get_instance_offset(csiphy_dev,
 			config.dev_handle);
+
+		if (csiphy_dev->is_acquired_dev_mipi_switch == 1)
+			offset = 0;
+
 		if (offset < 0 || offset >= CSIPHY_MAX_INSTANCES) {
 			CAM_ERR(CAM_CSIPHY, "Invalid offset");
 			goto release_mutex;
@@ -913,6 +955,9 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			csiphy_dev->csiphy_info.lane_cnt = 0;
 			csiphy_dev->csiphy_info.combo_mode = 0;
 		}
+
+		if (csiphy_dev->is_acquired_dev_mipi_switch == 1)
+			csiphy_dev->is_acquired_dev_mipi_switch = 0;
 	}
 		break;
 	case CAM_CONFIG_DEV: {
@@ -951,6 +996,10 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		offset = cam_csiphy_get_instance_offset(csiphy_dev,
 			config.dev_handle);
+
+		if (csiphy_dev->is_acquired_dev_mipi_switch == 1)
+			offset = 0;
+
 		if (offset < 0 || offset >= CSIPHY_MAX_INSTANCES) {
 			CAM_ERR(CAM_CSIPHY, "Invalid offset");
 			goto release_mutex;
@@ -966,6 +1015,8 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			&ahb_vote, &axi_vote);
 		if (rc < 0) {
 			CAM_ERR(CAM_CSIPHY, "voting CPAS: %d", rc);
+			if (rc == -EALREADY)
+				cam_cpas_stop(csiphy_dev->cpas_handle);
 			goto release_mutex;
 		}
 
