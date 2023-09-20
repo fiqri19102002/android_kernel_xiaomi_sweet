@@ -30,6 +30,12 @@ DISTRO=$(source /etc/os-release && echo ${NAME})
 PROCS=$(nproc --all)
 export PROCS
 
+# Get total RAM
+RAM_INFO=$(free -m)
+TOTAL_RAM=$(echo "$RAM_INFO" | awk '/^Mem:/{print $2}')
+TOTAL_RAM_GB=$(awk "BEGIN {printf \"%.0f\", $TOTAL_RAM/1024}")
+export TOTAL_RAM_GB
+
 # Set date and time
 DATE=$(TZ=Asia/Jakarta date)
 
@@ -104,21 +110,25 @@ setup_ksu() {
 
 # Set function for defconfig changes
 cfg_changes() {
-	if [ $COMPILER == "clang" ]; then
-		sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
-		sed -i 's/CONFIG_GCC_GRAPHITE=y/# CONFIG_GCC_GRAPHITE is not set/g' arch/arm64/configs/vendor/sweet_defconfig
-	elif [ $COMPILER == "gcc" ]; then
+	if [[ $PROCS -gt 4 && $TOTAL_RAM_GB -ge 8 ]]; then
+		echo -e "Detected $PROCS core CPU and $TOTAL_RAM_GB GB RAM, this will enable compiler optimizations."
+		if [ $COMPILER == "clang" ]; then
+			sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/CONFIG_GCC_GRAPHITE=y/# CONFIG_GCC_GRAPHITE is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		elif [ $COMPILER == "gcc" ]; then
+			sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+			sed -i 's/# CONFIG_LTO_NONE is not set/CONFIG_LTO_NONE=y/g' arch/arm64/configs/vendor/sweet_defconfig
+		fi
+	elif [[ $PROCS -le 4 && $TOTAL_RAM_GB -lt 8 ]]; then
+		echo -e "Detected $PROCS core CPU and $TOTAL_RAM_GB GB RAM, this will disable compiler optimizations."
+		# Disable optimizations for Clang
 		sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/g' arch/arm64/configs/vendor/sweet_defconfig
 		sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/g' arch/arm64/configs/vendor/sweet_defconfig
 		sed -i 's/# CONFIG_LTO_NONE is not set/CONFIG_LTO_NONE=y/g' arch/arm64/configs/vendor/sweet_defconfig
-	fi
-
-	if [ $LOCALBUILD == "1" ]; then
-		if [ $COMPILER == "clang" ]; then
-			sed -i 's/# CONFIG_THINLTO is not set/CONFIG_THINLTO=y/g' arch/arm64/configs/vendor/sweet_defconfig
-		elif [ $COMPILER == "gcc" ]; then
-			sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
-		fi
+		# Disable optimizations for GCC
+		sed -i 's/CONFIG_LTO_GCC=y/# CONFIG_LTO_GCC is not set/g' arch/arm64/configs/vendor/sweet_defconfig
+		sed -i 's/CONFIG_GCC_GRAPHITE=y/# CONFIG_GCC_GRAPHITE is not set/g' arch/arm64/configs/vendor/sweet_defconfig
 	fi
 }
 
