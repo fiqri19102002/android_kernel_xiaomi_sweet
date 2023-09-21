@@ -261,7 +261,7 @@ gen_zip() {
 	fi
 
 	if ! [[ -d "/home/fiqri" || -d "/root/project" ]]; then
-		curl -i -T *.zip https://oshi.at
+		#curl -i -T *.zip https://oshi.at
 		curl bashupload.com -T *.zip
 	fi
 	cd ..
