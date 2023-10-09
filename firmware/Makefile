@@ -11,6 +11,7 @@ fwabs := $(addprefix $(srctree)/,$(filter-out /%,$(fwdir)))$(filter /%,$(fwdir))
 fw-external-y := $(subst $(quote),,$(CONFIG_EXTRA_FIRMWARE))
 
 fw-shipped-$(CONFIG_TOUCHSCREEN_GOODIX_GTX9896_I2C) += goodix_gt9896_cfg.bin goodix_gt9896_fw.bin
+fw-shipped-$(CONFIG_TOUCHSCREEN_FTS_K6) += focaltech_ts_fw_k6.bin
 
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 quiet_cmd_ihex  = IHEX    $@
