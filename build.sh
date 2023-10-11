@@ -96,6 +96,9 @@ setup_ksu() {
 	curl -kLSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 	if [ -d "$KERNEL_DIR"/KernelSU ]; then
 		git apply KernelSU-hook.patch
+	else
+		echo -e "Setup KernelSU failed, stopped build now..."
+		exit 1
 	fi
 }
 
