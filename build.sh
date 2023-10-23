@@ -179,8 +179,8 @@ send_tg_msg() {
 	            "<b>Device : </b><code>Redmi Note 10 Pro (sweet)</code>" \
 	            "<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>" \
 	            "<b>Host CPU Name : </b><code>$CPU_NAME</code>" \
-	            "<b>Host Core Count : </b><code>$PROCS</code>" \
-	            "<b>Host RAM Count : </b><code>$TOTAL_RAM_GB</code>" \
+	            "<b>Host Core Count : </b><code>$PROCS core(s)</code>" \
+	            "<b>Host RAM Count : </b><code>$TOTAL_RAM_GB GB</code>" \
 	            "<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>" \
 	            "<b>Branch : </b><code>$BRANCH</code>" \
 	            "<b>Last Commit : </b><code>$COMMIT_HEAD</code>"
