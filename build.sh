@@ -137,13 +137,13 @@ clone() {
 		PATH=$TC_DIR/bin/:$PATH
 	elif [ $COMPILER == "gcc" ]; then
 		# Clone GCC ARM64 and ARM32
-		git clone https://github.com/fiqri19102002/aarch64-gcc.git -b release/elf-12 --depth=1 gcc64
-		git clone https://github.com/fiqri19102002/arm-gcc.git -b release/elf-12 --depth=1 gcc32
+		git clone https://github.com/arter97/arm64-gcc.git --depth=1 gcc64
+		git clone https://github.com/arter97/arm32-gcc.git --depth=1 gcc32
 		# Set environment for GCC ARM64 and ARM32
 		GCC64_DIR=$KERNEL_DIR/gcc64
 		GCC32_DIR=$KERNEL_DIR/gcc32
 		# Get path and compiler string
-		KBUILD_COMPILER_STRING=$("$GCC64_DIR"/bin/aarch64-elf-gcc --version | head -n 1)
+		KBUILD_COMPILER_STRING=$("$GCC64_DIR"/bin/aarch64-none-elf-gcc --version | head -n 1)
 		PATH=$GCC64_DIR/bin/:$GCC32_DIR/bin/:/usr/bin:$PATH
 	fi
 
@@ -197,8 +197,8 @@ compile() {
 					STRIP=llvm-strip
 		fi
 	elif [ $COMPILER == "gcc" ]; then
-		export CROSS_COMPILE_COMPAT=$GCC32_DIR/bin/arm-eabi-
-		make -j"$PROCS" O=out CROSS_COMPILE=aarch64-elf-
+		export CROSS_COMPILE_COMPAT=$GCC32_DIR/bin/arm-none-eabi-
+		make -j"$PROCS" O=out CROSS_COMPILE=aarch64-none-elf-
 	fi
 	BUILD_END=$(date +"%s")
 	DIFF=$((BUILD_END - BUILD_START))
