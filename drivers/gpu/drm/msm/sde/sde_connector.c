@@ -93,9 +93,6 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	if (!bl_lvl && brightness)
 		bl_lvl = 1;
 
-	if (bl_lvl && bl_lvl < display->panel->bl_config.bl_min_level)
-		bl_lvl = display->panel->bl_config.bl_min_level;
-
 	if (!c_conn->allow_bl_update) {
 		c_conn->unset_bl_level = bl_lvl;
 		return 0;
