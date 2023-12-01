@@ -4117,8 +4117,7 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		return rc;
 	}
 	aw8624->work_queue =
-	    alloc_workqueue("aw8624_vibrator_work_queue",
-						WQ_UNBOUND | WQ_HIGHPRI, 0);
+	    create_singlethread_workqueue("aw8624_vibrator_work_queue");
 	if (!aw8624->work_queue) {
 		dev_err(&i2c->dev,
 			"%s: Error creating aw8624_vibrator_work_queue\n",
