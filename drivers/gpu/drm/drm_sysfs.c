@@ -261,11 +261,180 @@ static ssize_t panel_info_show(struct device *device,
 	return written;
 }
 
+int dsi_bridge_disp_set_doze_backlight(struct drm_connector *connector,
+			int doze_backlight);
+ssize_t dsi_bridge_disp_get_doze_backlight(struct drm_connector *connector,
+			char *buf);
+
+static ssize_t doze_brightness_show(struct device *device,
+			    struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	struct drm_device *dev = connector->dev;
+
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			dev->doze_brightness);
+}
+
+static ssize_t doze_backlight_store(struct device *device,
+			   struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	int doze_backlight;
+	int ret;
+
+	ret = kstrtoint(buf, 0, &doze_backlight);
+	if (ret)
+		return ret;
+
+	ret = dsi_bridge_disp_set_doze_backlight(connector, doze_backlight);
+
+	return ret ? ret : count;
+}
+
+static ssize_t doze_backlight_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(dev);
+
+	return dsi_bridge_disp_get_doze_backlight(connector, buf);
+}
+
+void drm_bridge_disp_param_set(struct drm_bridge *bridge, int cmd);
+static ssize_t disp_param_store(struct device *device,
+			   struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	int param;
+	struct drm_connector *connector = NULL;
+	struct drm_encoder *encoder = NULL;
+	struct drm_bridge *bridge = NULL;
+
+	if (!device)
+		return count;
+
+	connector = to_drm_connector(device);
+	if (!connector)
+		return count;
+
+	encoder = connector->encoder;
+	if (!encoder)
+		return count;
+
+	bridge = encoder->bridge;
+	if (!bridge)
+		return count;
+	sscanf(buf, "0x%x", &param);
+
+	drm_bridge_disp_param_set(bridge, param);
+
+	return count;
+}
+
+ssize_t drm_bridge_disp_param_get(struct drm_bridge *bridge, char *pbuf);
+static ssize_t disp_param_show(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	ssize_t ret = 0;
+	struct drm_connector *connector = NULL;
+	struct drm_encoder *encoder = NULL;
+	struct drm_bridge *bridge = NULL;
+
+	connector = to_drm_connector(device);
+	if (!connector)
+		return ret;
+
+	encoder = connector->encoder;
+	if (!encoder)
+		return ret;
+
+	bridge = encoder->bridge;
+	if (!bridge)
+		return ret;
+
+	ret = drm_bridge_disp_param_get(bridge, buf);
+
+	return ret;
+}
+
+static ssize_t mipi_reg_show(struct device *device,
+				  struct device_attribute *attr,
+				  char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+
+	return dsi_display_mipi_reg_read(connector, buf);
+}
+
+static ssize_t mipi_reg_store(struct device *device,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+
+	return dsi_display_mipi_reg_write(connector, (char *)buf, count);;
+}
+
+static ssize_t thermal_hbm_disabled_store(struct device *device,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	char *input_copy, *input_dup = NULL;
+	bool thermal_hbm_disabled;
+	int ret;
+
+	input_copy = kstrdup(buf, GFP_KERNEL);
+	if (!input_copy) {
+		DRM_ERROR("can not allocate memory\n");
+		ret = -ENOMEM;
+		goto exit;
+	}
+	input_dup = input_copy;
+
+	/* removes leading and trailing whitespace from input_copy */
+	input_copy = strim(input_copy);
+	ret = kstrtobool(input_copy, &thermal_hbm_disabled);
+	if (ret) {
+		DRM_ERROR("input buffer conversion failed\n");
+		ret = -EAGAIN;
+		goto exit_free;
+	}
+
+	DRM_INFO("set thermal_hbm_disabled %d\n", thermal_hbm_disabled);
+	ret = dsi_display_set_thermal_hbm_disabled(connector, thermal_hbm_disabled);
+
+exit_free:
+	kfree(input_dup);
+exit:
+	return ret ? ret : count;
+}
+
+static ssize_t thermal_hbm_disabled_show(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	bool thermal_hbm_disabled;
+
+	dsi_display_get_thermal_hbm_disabled(connector, &thermal_hbm_disabled);
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", thermal_hbm_disabled);
+}
+
 static DEVICE_ATTR_RW(status);
 static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
+static DEVICE_ATTR_RW(thermal_hbm_disabled);
 static DEVICE_ATTR_RO(panel_info);
+static DEVICE_ATTR_RW(disp_param);
+static DEVICE_ATTR_RO(doze_brightness);
+static DEVICE_ATTR_RW(doze_backlight);
+static DEVICE_ATTR_RW(mipi_reg);
 
 static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_status.attr,
@@ -273,6 +442,11 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_dpms.attr,
 	&dev_attr_modes.attr,
 	&dev_attr_panel_info.attr,
+	&dev_attr_disp_param.attr,
+	&dev_attr_doze_brightness.attr,
+	&dev_attr_doze_backlight.attr,
+	&dev_attr_mipi_reg.attr,
+	&dev_attr_thermal_hbm_disabled.attr,
 	NULL
 };
 

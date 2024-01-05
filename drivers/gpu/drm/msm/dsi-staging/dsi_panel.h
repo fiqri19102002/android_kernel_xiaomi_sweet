@@ -38,6 +38,8 @@
 
 #define DSI_MODE_MAX 5
 
+#define BUF_LEN_MAX    256
+
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
 	DSI_PANEL_ROTATE_HV_FLIP,
@@ -172,6 +174,17 @@ struct drm_panel_esd_config {
 	u8 *return_buf;
 	u8 *status_buf;
 	u32 groups;
+	int esd_err_irq_gpio;
+	int esd_err_irq;
+	int esd_err_irq_flags;
+};
+
+struct dsi_read_config {
+	bool enabled;
+	struct dsi_panel_cmd_set read_cmd;
+	u32 cmds_rlen;
+	u32 valid_bits;
+	u8 rbuf[64];
 };
 
 struct dsi_panel {
@@ -218,12 +231,36 @@ struct dsi_panel {
 	bool te_using_watchdog_timer;
 	u32 qsync_min_fps;
 
+	bool dispparam_enabled;
+	u32 skip_dimmingon;
+
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
+
+	u32 panel_on_dimming_delay;
+	struct delayed_work nolp_bl_delay_work;
+	u32 last_bl_lvl;
+	/* DC bkl */
+	bool dc_enable;
+	u32 dc_threshold;
+
+	bool hbm_enabled;
+	bool thermal_hbm_disabled;
+	u32 hbm_brightness;
+	u32 doze_backlight_threshold;
+	u32 hbm_off_51_index;
+
+	u8 panel_read_data[BUF_LEN_MAX];
+
+	bool in_aod; /* set  DISPPARAM_DOZE_BRIGHTNESS_HBM/LBM only in AOD */
+	int doze_brightness;
+
+	int doze_lbm_brightness;
+	int doze_hbm_brightness;
 
 	bool doze_enabled;
 	enum dsi_doze_mode_type doze_mode;
@@ -292,9 +329,6 @@ int dsi_panel_get_phy_props(struct dsi_panel *panel,
 int dsi_panel_get_dfps_caps(struct dsi_panel *panel,
 			    struct dsi_dfps_capabilities *dfps_caps);
 
-void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
-                        struct dsi_display_mode *adj_mode);
-
 int dsi_panel_pre_prepare(struct dsi_panel *panel);
 
 int dsi_panel_set_lp1(struct dsi_panel *panel);
@@ -358,5 +392,32 @@ int dsi_panel_set_doze_status(struct dsi_panel *panel, bool status);
 int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mode);
 
 int dsi_panel_apply_hbm_mode(struct dsi_panel *panel);
+
+int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt);
+int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
+				u32 packet_count);
+int dsi_panel_create_cmd_packets(const char *data,
+				u32 length,
+				u32 count,
+				struct dsi_cmd_desc *cmd);
+void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
+void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
+
+int dsi_panel_write_cmd_set(struct dsi_panel *panel,
+				struct dsi_panel_cmd_set *cmd_sets);
+
+int dsi_panel_read_cmd_set(struct dsi_panel *panel,
+				struct dsi_read_config *read_config);
+
+ssize_t dsi_panel_mipi_reg_write(struct dsi_panel *panel,
+				char *buf, size_t count);
+
+ssize_t dsi_panel_mipi_reg_read(struct dsi_panel *panel,
+				char *buf);
+
+int dsi_panel_set_thermal_hbm_disabled(struct dsi_panel *panel,
+				bool thermal_hbm_disabled);
+int dsi_panel_get_thermal_hbm_disabled(struct dsi_panel *panel,
+				bool *thermal_hbm_disabled);
 
 #endif /* _DSI_PANEL_H_ */
