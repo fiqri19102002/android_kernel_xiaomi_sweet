@@ -355,6 +355,7 @@ static int goodix_debugfs_init(void)
 	goodix_dbg.dentry = r_b;
 
 exit:
+	kfree(goodix_dbg.buf.data);
 	return 0;
 }
 
@@ -2840,6 +2841,11 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 	int ret = 0;
 	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
 
+	if (gtp_mode >= Touch_Mode_NUM) {
+		ts_err("gtp mode is error:%d", gtp_mode);
+		return -EINVAL;
+	}
+
 	if (gtp_mode == Touch_Doubletap_Mode && goodix_core_data && gtp_value >= 0) {
 		goodix_core_data->double_wakeup = gtp_value;
 		queue_work(goodix_core_data->touch_gesture_wq, &goodix_core_data->gesture_work);
@@ -2880,10 +2886,7 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 	}
 
 	xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] = gtp_value;
-	if (gtp_mode >= Touch_Mode_NUM) {
-		ts_err("gtp mode is error:%d", gtp_mode);
-		return -EINVAL;
-	} else if (xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] >
+	if (xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] >
 			xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_MAX_VALUE]) {
 
 		xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] =

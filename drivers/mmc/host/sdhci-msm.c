@@ -1863,10 +1863,16 @@ static int sdhci_msm_pm_qos_parse_cpu_groups(struct device *dev,
 {
 	struct device_node *np = dev->of_node;
 	u32 mask;
-	int nr_groups = 1;
+	int nr_groups;
 	int ret;
 	int i;
 
+	/* Read cpu group mapping */
+	nr_groups = of_property_count_u32_elems(np, "qcom,pm-qos-cpu-groups");
+	if (nr_groups <= 0) {
+		ret = -EINVAL;
+		goto out;
+	}
 	pdata->pm_qos_data.cpu_group_map.nr_groups = nr_groups;
 	pdata->pm_qos_data.cpu_group_map.mask =
 		kcalloc(nr_groups, sizeof(cpumask_t), GFP_KERNEL);
@@ -4370,9 +4376,8 @@ void sdhci_msm_pm_qos_cpu_init(struct sdhci_host *host,
 		INIT_DELAYED_WORK(&group->unvote_work,
 			sdhci_msm_pm_qos_cpu_unvote_work);
 		atomic_set(&group->counter, 0);
-		group->req.type = PM_QOS_REQ_AFFINE_CORES;
-		group->req.cpus_affine =
-			*cpumask_bits(&msm_host->pdata->pm_qos_data.cpu_group_map.mask[i]);
+		group->req.type = PM_QOS_REQ_AFFINE_IRQ;
+		group->req.irq = host->irq;
 		/* We set default latency here for all pm_qos cpu groups. */
 		group->latency = PM_QOS_DEFAULT_VALUE;
 		pm_qos_add_request(&group->req, PM_QOS_CPU_DMA_LATENCY,

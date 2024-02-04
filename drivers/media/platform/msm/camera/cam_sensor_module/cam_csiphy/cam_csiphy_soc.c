@@ -43,12 +43,12 @@ static int cam_io_phy_dump(void __iomem *base_addr,
 	p_str = line_str;
 	for (i = 0; i < size; i++) {
 		if (i % NUM_REGISTER_PER_LINE == 0) {
-			snprintf(p_str, 12, "0x%08x: ",
+			snprintf(p_str, sizeof(line_str) - (p_str - line_str), "0x%08x: ",
 				REG_OFFSET(start_offset, i));
 			p_str += 11;
 		}
 		data = readl_relaxed(base_addr + REG_OFFSET(start_offset, i));
-		snprintf(p_str, 9, "%08x ", data);
+		snprintf(p_str, sizeof(line_str) - (p_str - line_str), "%08x ", data);
 		p_str += 8;
 		if ((i + 1) % NUM_REGISTER_PER_LINE == 0) {
 			CAM_ERR(CAM_CSIPHY, "%s", line_str);
@@ -272,8 +272,7 @@ int32_t cam_csiphy_parse_dt_info(struct platform_device *pdev,
 		csiphy_dev->is_csiphy_3phase_hw = CSI_3PHASE_HW_12;
 		csiphy_dev->hw_version = CSIPHY_VERSION_V12;
 		csiphy_dev->clk_lane = 0;
-		csiphy_dev->ctrl_reg->data_rates_settings_table =
-			&data_rate_delta_table_1_2;
+		csiphy_dev->ctrl_reg->data_rates_settings_table = NULL;
 	} else if (of_device_is_compatible(soc_info->dev->of_node,
 		"qcom,csiphy-v1.2.2")) {
 		csiphy_dev->ctrl_reg->csiphy_2ph_reg = csiphy_2ph_v1_2_2_reg;

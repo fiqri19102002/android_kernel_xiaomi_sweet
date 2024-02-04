@@ -75,8 +75,6 @@ enum pm_state {
 /* jeita related */
 #define JEITA_WARM_THR			480
 #define JEITA_COOL_THR			100
-#define JEITA_BYPASS_WARM_THR		480
-#define JEITA_BYPASS_COOL_THR		100
 
 #define PDO_MAX_NUM			7
 /*
@@ -100,14 +98,6 @@ enum pm_state {
 #define BQ_TAPER_HYS_MV			10
 
 #define BQ_TAPER_DECREASE_STEP_MA			200
-
-/* SC8551 bypass mode related */
-#define MAX_BYPASS_CURRENT_MA			3000
-#define BYPASS_VBAT_ENTER_THRES			3600	// avoid triger vin_uvlo
-#define BYPASS_FCC_ENTER_THRES			3000
-#define BYPASS_FCC_EXIT_THRES			3200
-#define BYPASS_THERMAL_ENTER_LEVEL		9
-#define BYPASS_THERMAL_EXIT_LEVEL		14
 
 #define VALID_VBUS_THRESHOLD			4500
 
@@ -170,9 +160,6 @@ struct cp_device {
 	int  die_temp;
 
 	int bus_error_status;
-
-	int  sc8551_charge_mode;
-	int  sc8551_bypass_charge_enable;
 };
 
 #define PM_STATE_LOG_MAX    32

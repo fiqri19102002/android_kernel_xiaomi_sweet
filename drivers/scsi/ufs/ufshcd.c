@@ -776,6 +776,24 @@ static void ufshcd_print_cmd_log(struct ufs_hba *hba)
 }
 #endif
 
+#if defined(CONFIG_TRACEPOINTS) && !defined(CONFIG_SCSI_UFSHCD_CMD_LOGGING)
+static void __ufshcd_cmd_log(struct ufs_hba *hba, char *str, char *cmd_type,
+			     unsigned int tag, u8 cmd_id, u8 idn, u8 lun,
+			     sector_t lba, int transfer_len)
+{
+	struct ufshcd_cmd_log_entry entry;
+
+	entry.str = str;
+	entry.lba = lba;
+	entry.cmd_id = cmd_id;
+	entry.transfer_len = transfer_len;
+	entry.doorbell = ufshcd_readl(hba, REG_UTP_TRANSFER_REQ_DOOR_BELL);
+	entry.tag = tag;
+
+	ufshcd_add_command_trace(hba, &entry);
+}
+#endif
+
 #ifdef CONFIG_TRACEPOINTS
 static inline void ufshcd_cond_add_cmd_trace(struct ufs_hba *hba,
 					unsigned int tag, const char *str)
