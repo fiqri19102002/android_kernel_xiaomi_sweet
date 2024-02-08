@@ -48,6 +48,8 @@
 			17000 15500 30000 8000 3000>;
 		qcom,mdss-dsi-panel-peak-brightness = <4200000>;
 		qcom,mdss-dsi-panel-blackness-level = <3230>;
+		/* IRQF_ONESHOT | IRQF_TRIGGER_RISING */
+		qcom,esd-err-irq-gpio = <&tlmm 32 0x2001>;
 		/* hbm off param */
 		qcom,mdss-dsi-panel-hbm-off-51-index = <1>;
 
