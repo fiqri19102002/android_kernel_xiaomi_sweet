@@ -48,11 +48,19 @@
 			17000 15500 30000 8000 3000>;
 		qcom,mdss-dsi-panel-peak-brightness = <4200000>;
 		qcom,mdss-dsi-panel-blackness-level = <3230>;
+		/* hbm off param */
+		qcom,mdss-dsi-panel-hbm-off-51-index = <1>;
 
 		/* DFPS */
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
 		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode_vfp";
 		qcom,dsi-supported-dfps-list = <120 60>;
+
+		qcom,mdss-dsi-panel-dc-threshold = <488>;
+
+		/* AOD brightness setting */
+		mi,mdss-dsi-doze-hbm-brightness-value = <272>;
+		mi,mdss-dsi-doze-lbm-brightness-value = <22>;
 
 		qcom,mdss-dsi-display-timings {
 			timing@0{
