@@ -171,6 +171,17 @@ set_naming() {
 	fi
 }
 
+# Set function for override kernel name
+override_name() {
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		LOCALVERSION="-STRIX-[KSU]-personal"
+	else
+		LOCALVERSION="-STRIX-personal"
+	fi
+
+	export LOCALVERSION
+}
+
 # Set function for send messages to Telegram
 send_tg_msg() {
 	tg_post_msg "<b>Docker OS: </b><code>$DISTRO</code>" \
@@ -272,11 +283,13 @@ compiler_opt
 if [ $LOCALBUILD == "0" ]; then
 	send_tg_msg
 fi
+override_name
 compile
 set_naming
 gen_zip
 setup_ksu
 compiler_opt
+override_name
 compile
 set_naming
 gen_zip
