@@ -186,6 +186,17 @@ send_tg_msg() {
 	            "<b>Last Commit : </b><code>$COMMIT_HEAD</code>"
 }
 
+# Set function for override kernel name
+override_name() {
+	if [ -d "$KERNEL_DIR"/KernelSU ]; then
+		LOCALVERSION="-STRIX-personal-[KSU]"
+	else
+		LOCALVERSION="-STRIX-personal"
+	fi
+
+	export LOCALVERSION
+}
+
 # Set function for starting compile
 compile() {
 	echo -e "Kernel compilation starting"
@@ -272,11 +283,13 @@ compiler_opt
 if [ $LOCALBUILD == "0" ]; then
 	send_tg_msg
 fi
+override_name
 compile
 set_naming
 gen_zip
 setup_ksu
 compiler_opt
+override_name
 compile
 set_naming
 gen_zip
